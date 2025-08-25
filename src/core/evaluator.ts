@@ -120,9 +120,12 @@ export class Evaluator {
     if (!section) return true;
 
     if (section.type === "profile") {
-      return !this.currentProfile ||
-        section.name === "default" ||
-        section.name === this.currentProfile;
+      // If no profile is selected, only apply [default] section.
+      if (!this.currentProfile) {
+        return section.name === "default";
+      }
+      // When a profile is selected, apply both [default] and the matching profile section.
+      return section.name === "default" || section.name === this.currentProfile;
     }
 
     if (section.type === "scope") {

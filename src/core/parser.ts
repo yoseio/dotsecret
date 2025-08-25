@@ -245,6 +245,8 @@ export class Parser {
       const node = this.parseSingleNode();
       if (node) {
         body.push(node);
+      } else {
+        this.currentLine++;
       }
     }
 
@@ -291,7 +293,7 @@ export class Parser {
     const isProtected = !!protectedMatch;
     const content = isProtected ? protectedMatch![2] : line;
 
-    const operatorMatch = content.match(/^([A-Z_][A-Z0-9_]*)\s*([?+]?=|\s*@unset)(.*)$/);
+    const operatorMatch = content.match(/^([A-Z_][A-Z0-9_]*)\s*(=\s*@unset|[?+]?=)(.*)$/);
     if (!operatorMatch) {
       return null;
     }
@@ -301,7 +303,7 @@ export class Parser {
     const valueStr = operatorMatch[3].trim();
 
     let operator: AssignmentOperator;
-    if (operatorStr === "@unset") {
+    if (operatorStr === "@unset" || operatorStr === "= @unset" || operatorStr.includes("@unset")) {
       operator = "@unset";
     } else {
       operator = operatorStr as AssignmentOperator;
@@ -387,12 +389,18 @@ export class Parser {
       if (!inQuote) {
         if (char === "(") depth++;
         if (char === ")") depth--;
+        
+        // Handle soft pipe ?|
+        if (char === "?" && next === "|" && depth === 0) {
+          parts.push(current.trim());
+          current = "?";
+          i++; // Skip the |
+          continue;
+        }
+        
         if (char === "|" && depth === 0 && next !== "|") {
           parts.push(current.trim());
           current = "";
-          if (next === "?") {
-            i++;
-          }
           continue;
         }
       }
@@ -425,7 +433,7 @@ export class Parser {
 
   private parsePipe(content: string): PipeCall | null {
     const soft = content.startsWith("?");
-    const pipeContent = soft ? content.slice(1) : content;
+    const pipeContent = soft ? content.slice(1).trim() : content.trim();
 
     const match = pipeContent.match(/^(\w+)(?:\s*\(([^)]*)\))?$/);
     if (!match) return null;

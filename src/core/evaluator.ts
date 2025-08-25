@@ -38,6 +38,7 @@ export class Evaluator {
   private errors: string[] = [];
   private currentProfile?: string;
   private currentScopes: string[] = [];
+  private scopeChildren: Map<string, Set<string>> = new Map();
   private withContext: Record<string, Record<string, string>> = {};
   private assignmentLog: Map<string, Array<{ assignment: Assignment; source: string }>> = new Map();
 
@@ -52,6 +53,8 @@ export class Evaluator {
   }
 
   async evaluate(files: ParsedFile[]): Promise<EvaluationResult> {
+    // Build scope graph (parent -> set of children) for scope extends resolution
+    this.buildScopeGraph(files);
     const policyContext = this.createPolicyContext();
 
     const startEffect = await this.policy.onStart?.(policyContext);
@@ -146,10 +149,36 @@ export class Evaluator {
       visited.add(scope);
       expanded.add(scope);
 
-      // TODO: Handle scope extends when we have full scope definitions
+      // Include all descendants that extend this scope
+      const children = this.scopeChildren.get(scope);
+      if (children) {
+        for (const child of children) {
+          const childExpanded = this.expandScopes([child], visited);
+          for (const c of childExpanded) expanded.add(c);
+        }
+      }
     }
 
     return expanded;
+  }
+
+  private buildScopeGraph(files: ParsedFile[]): void {
+    this.scopeChildren.clear();
+    for (const file of files) {
+      for (const node of file.nodes) {
+        if (node.type === "section" && node.data.type === "scope") {
+          const sec = node.data;
+          if (sec.extends && sec.extends.length > 0) {
+            for (const parent of sec.extends) {
+              if (!this.scopeChildren.has(parent)) {
+                this.scopeChildren.set(parent, new Set());
+              }
+              this.scopeChildren.get(parent)!.add(sec.name);
+            }
+          }
+        }
+      }
+    }
   }
 
   private processAssignment(assignment: Assignment, source: string): void {
@@ -170,9 +199,7 @@ export class Evaluator {
       return;
     }
 
-    if (operator === "?=" && key in this.env) {
-      return;
-    }
+    // Do not short-circuit ?= here; resolution phase determines final presence
 
     // Track every effective assignment in order for later resolution
     const list = this.assignmentLog.get(key) || [];

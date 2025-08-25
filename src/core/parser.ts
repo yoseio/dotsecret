@@ -70,9 +70,12 @@ export class Parser {
       const assignment = this.parseAssignment(line);
       if (assignment) {
         nodes.push({ type: "assignment", data: assignment });
+        this.currentLine++;
+        continue;
       }
 
-      this.currentLine++;
+      // Non-empty, non-comment, non-directive/section/with lines must be invalid
+      throw new ParseError("Invalid syntax", this.getLineLocation());
     }
 
     return { path: this.currentFile, nodes };
@@ -198,20 +201,19 @@ export class Parser {
     const body: ASTNode[] = [];
     this.currentLine++;
 
-    const tempParser = new Parser("", this.currentFile);
-    tempParser.lines = this.lines;
-    tempParser.currentLine = this.currentLine;
-
     while (this.currentLine < this.lines.length) {
-      const line = this.lines[this.currentLine].trim();
-      if (line === "}") {
+      const trimmed = this.lines[this.currentLine].trim();
+      if (trimmed === "}") {
         this.currentLine++;
         break;
       }
 
-      const node = tempParser.parseSingleNode();
+      const node = this.parseSingleNode();
       if (node) {
         body.push(node);
+      } else {
+        // parseSingleNode advances line for blanks/comments; keep scanning
+        continue;
       }
     }
 
@@ -293,14 +295,15 @@ export class Parser {
     const isProtected = !!protectedMatch;
     const content = isProtected ? protectedMatch![2] : line;
 
-    const operatorMatch = content.match(/^([A-Z_][A-Z0-9_]*)\s*(=\s*@unset|[?+]?=)(.*)$/);
+    // Allow leading indentation before the key
+    const operatorMatch = content.trimStart().match(/^([A-Z_][A-Z0-9_]*)\s*(=\s*@unset|[?+]?=)(.*)$/);
     if (!operatorMatch) {
       return null;
     }
 
     const key = operatorMatch[1];
     const operatorStr = operatorMatch[2].trim();
-    const valueStr = operatorMatch[3].trim();
+    let valueStr = operatorMatch[3].trim();
 
     let operator: AssignmentOperator;
     if (operatorStr === "@unset" || operatorStr === "= @unset" || operatorStr.includes("@unset")) {
@@ -315,6 +318,32 @@ export class Parser {
       const sepMatch = valueStr.match(/^\(["'](.+)["']\)/);
       if (sepMatch) {
         options.separator = sepMatch[1];
+      }
+    }
+
+    // Handle multiline triple-quoted strings
+    if (operator !== "@unset") {
+      const startsTriple = valueStr.startsWith('"""');
+      const endsTriple = valueStr.endsWith('"""') && valueStr.length >= 6; // """"""
+
+      if (startsTriple && !endsTriple) {
+        let collected: string[] = [];
+        let i = this.currentLine + 1;
+        let foundEnd = false;
+        while (i < this.lines.length) {
+          const l = this.lines[i];
+          if (l.trim() === '"""') {
+            foundEnd = true;
+            break;
+          }
+          collected.push(l);
+          i++;
+        }
+        if (foundEnd) {
+          // Advance parser to the closing delimiter line
+          this.currentLine = i;
+          valueStr = '"""' + collected.join("\n") + '"""';
+        }
       }
     }
 

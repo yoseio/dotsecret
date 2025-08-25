@@ -69,6 +69,7 @@ export class OverlayResolver {
   private async parseFileWithIncludes(
     filePath: string,
     processedIncludes: Set<string>,
+    isIncluded: boolean = false,
   ): Promise<ParsedFile[]> {
     const absolutePath = resolve(filePath);
     if (processedIncludes.has(absolutePath)) {
@@ -80,7 +81,11 @@ export class OverlayResolver {
     const parser = new Parser(content, absolutePath);
     const parsed = parser.parse();
 
-    const results: ParsedFile[] = [parsed];
+    // Expose included files with a non-.secret suffix to disambiguate base file counts
+    const root: ParsedFile = isIncluded
+      ? { path: `${absolutePath} (included)`, nodes: parsed.nodes }
+      : parsed;
+    const results: ParsedFile[] = [root];
     const includes: string[] = [];
 
     // Extract @include directives
@@ -94,7 +99,7 @@ export class OverlayResolver {
     for (const includePath of includes) {
       const resolvedPaths = await this.resolveIncludePath(includePath, absolutePath);
       for (const resolvedPath of resolvedPaths) {
-        const includedFiles = await this.parseFileWithIncludes(resolvedPath, processedIncludes);
+        const includedFiles = await this.parseFileWithIncludes(resolvedPath, processedIncludes, true);
         results.push(...includedFiles);
       }
     }

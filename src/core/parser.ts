@@ -248,7 +248,8 @@ export class Parser {
       if (node) {
         body.push(node);
       } else {
-        this.currentLine++;
+        // parseSingleNode already advances for blanks/comments; keep scanning
+        continue;
       }
     }
 
@@ -367,9 +368,8 @@ export class Parser {
   private parseExpression(value: string): Expression {
     value = value.trim();
 
-    const parts = value.split(/\s*\|\|\s*/);
-    const mainPart = parts[0];
-    const fallback = parts.length > 1 ? this.unquote(parts[1]) : undefined;
+    const [mainPart, rawFallback] = this.splitOnTopLevelFallback(value);
+    const fallback = rawFallback !== undefined ? this.unquote(rawFallback) : undefined;
 
     const pipeParts = this.splitPipes(mainPart);
     const firstPart = pipeParts[0];
@@ -399,6 +399,35 @@ export class Parser {
       pipes,
       fallback,
     };
+  }
+
+  private splitOnTopLevelFallback(value: string): [string, string | undefined] {
+    let inQuote = false;
+    let quoteChar = "";
+    let depth = 0;
+
+    for (let i = 0; i < value.length - 1; i++) {
+      const ch = value[i];
+      const next = value[i + 1];
+
+      if (!inQuote && (ch === '"' || ch === "'")) {
+        inQuote = true;
+        quoteChar = ch;
+      } else if (inQuote && ch === quoteChar && value[i - 1] !== "\\") {
+        inQuote = false;
+      } else if (!inQuote) {
+        if (ch === "(") depth++;
+        if (ch === ")") depth = Math.max(0, depth - 1);
+
+        if (depth === 0 && ch === "|" && next === "|") {
+          const left = value.slice(0, i).trim();
+          const right = value.slice(i + 2).trim();
+          return [left, right];
+        }
+      }
+    }
+
+    return [value.trim(), undefined];
   }
 
   private splitPipes(value: string): string[] {

@@ -60,6 +60,16 @@ Deno.test("Pipe - replace", async () => {
     "testXXXtest",
   );
 
+  // Regex + ignore case
+  assertEquals(
+    await replace.apply(
+      "Hello hello",
+      { search: "hello", replace: "hi", flags: "gri" },
+      mockContext,
+    ),
+    "hi hi",
+  );
+
   await assertRejects(
     async () => await replace.apply("test", {}, mockContext),
     Error,
@@ -141,6 +151,15 @@ Deno.test("Pipe - json", async () => {
     async () => await json.apply("invalid json", { path: "test" }, mockContext),
     Error,
     "parse",
+  );
+
+  // Note: missing path currently returns undefined (no throw)
+
+  // Extracting object yields stringified JSON
+  const jsonObjStr = JSON.stringify({ obj: { a: 1 } });
+  assertEquals(
+    await json.apply(jsonObjStr, { path: "obj" }, mockContext),
+    JSON.stringify({ a: 1 }),
   );
 });
 

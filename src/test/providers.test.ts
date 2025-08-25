@@ -46,6 +46,14 @@ Deno.test("Provider - env", async () => {
     };
     assertEquals(await env.resolveSingle(ref3, mockContext), "fallback");
 
+    // Using value alias for name
+    const ref3b: ProviderRef = {
+      kind: "call",
+      fn: "env",
+      args: { value: "TEST_VAR" },
+    };
+    assertEquals(await env.resolveSingle(ref3b, mockContext), "test-value");
+
     // Missing without default
     const ref4: ProviderRef = {
       kind: "call",

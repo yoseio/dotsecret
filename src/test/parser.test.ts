@@ -204,6 +204,30 @@ with gcp(project="my-project") {
   }
 });
 
+Deno.test("Parser - with directive handles blank lines", () => {
+  const content = `
+with gcp(project="my-project") {
+  DB_USER = !gcp(secret="db_user")
+
+  DB_PASS = !gcp(secret="db_pass")
+}
+  `.trim();
+
+  const parser = new Parser(content, "test.secret");
+  const result = parser.parse();
+
+  const directives = result.nodes.filter((n) => n.type === "directive");
+  assertEquals(directives.length, 1);
+
+  const withDirective = directives[0].data;
+  assertEquals(withDirective.type, "with");
+  if (withDirective.type === "with") {
+    // Should include both assignments even with a blank line between
+    const bodyAssignments = withDirective.body.filter((n) => n.type === "assignment");
+    assertEquals(bodyAssignments.length, 2);
+  }
+});
+
 Deno.test("Parser - from directive", () => {
   const content = `
 @from gcp://projects/my-project/secrets {
@@ -312,4 +336,66 @@ JSON_PATH = !file(path="config.json") | json(path="database.host")
 
   assertEquals(assignments[1].data.expression.pipes[0].name, "json");
   assertEquals(assignments[1].data.expression.pipes[0].args.path, "database.host");
+});
+
+Deno.test("Parser - literal with '||' is not fallback", () => {
+  const content = `
+VALUE = "left || right"
+  `.trim();
+
+  const parser = new Parser(content, "test.secret");
+  const result = parser.parse();
+
+  const assignments = result.nodes.filter((n) => n.type === "assignment");
+  assertEquals(assignments.length, 1);
+
+  const expr = assignments[0].data.expression;
+  // Should keep full literal and not treat as fallback
+  assertEquals(expr.literal, "left || right");
+  assertEquals(expr.fallback, undefined);
+});
+
+Deno.test("Parser - triple-quoted empty string", () => {
+  const content = `
+EMPTY = """"""  
+  `.trim();
+
+  const parser = new Parser(content, "test.secret");
+  const result = parser.parse();
+
+  const assignments = result.nodes.filter((n) => n.type === "assignment");
+  assertEquals(assignments.length, 1);
+
+  const expr = assignments[0].data.expression;
+  assertEquals(expr.literal, "");
+});
+
+Deno.test("Parser - inline triple-quoted literal on one line", () => {
+  const content = `
+INLINE = """hello world"""
+  `.trim();
+
+  const parser = new Parser(content, "test.secret");
+  const result = parser.parse();
+
+  const assignments = result.nodes.filter((n) => n.type === "assignment");
+  assertEquals(assignments.length, 1);
+
+  const expr = assignments[0].data.expression;
+  assertEquals(expr.literal, "hello world");
+});
+
+Deno.test("Parser - quoted string unescapes escapes", () => {
+  const content = `
+ESC = "\\"q\\" \\n"
+  `.trim();
+
+  const parser = new Parser(content, "test.secret");
+  const result = parser.parse();
+
+  const assignments = result.nodes.filter((n) => n.type === "assignment");
+  assertEquals(assignments.length, 1);
+  const expr = assignments[0].data.expression;
+  // Should start with the unescaped quotes
+  assertEquals((expr.literal || "").startsWith('"q"'), true);
 });

@@ -155,13 +155,12 @@ export class Evaluator {
   private processAssignment(assignment: Assignment, source: string): void {
     const { key, operator, expression, options } = assignment;
 
-    // Track every assignment in order for later resolution
-    const list = this.assignmentLog.get(key) || [];
-    list.push({ assignment, source });
-    this.assignmentLog.set(key, list);
-
+    // Handle special cases before recording in assignment log
     if (operator === "@unset") {
-      // Defer actual deletion to resolution phase
+      // Track the unset for resolution, then stop
+      const list = this.assignmentLog.get(key) || [];
+      list.push({ assignment, source });
+      this.assignmentLog.set(key, list);
       return;
     }
 
@@ -174,6 +173,11 @@ export class Evaluator {
     if (operator === "?=" && key in this.env) {
       return;
     }
+
+    // Track every effective assignment in order for later resolution
+    const list = this.assignmentLog.get(key) || [];
+    list.push({ assignment, source });
+    this.assignmentLog.set(key, list);
 
     this.metadata[key] = {
       value: "",

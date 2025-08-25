@@ -176,7 +176,7 @@ export class GCPSecretManagerProvider implements Provider {
     }
   }
 
-  private async getTokenFromServiceAccount(_path: string): Promise<string> {
+  private getTokenFromServiceAccount(_path: string): Promise<string> {
     // const content = await Deno.readTextFile(path);
     // const serviceAccount = JSON.parse(content);
 

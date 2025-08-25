@@ -1,5 +1,7 @@
-export async function cacheCommand(args: any): Promise<void> {
-  const subcommand = args._[1];
+type Argv = { _: unknown[] } & Record<string, unknown>;
+
+export async function cacheCommand(args: Argv): Promise<void> {
+  const subcommand = (args._[1] ?? "").toString();
 
   if (subcommand !== "purge") {
     console.error("Usage: dotsecret cache purge");

@@ -13,29 +13,32 @@ export class MemoryCache implements Cache {
     this.cleanupInterval = setInterval(() => this.cleanup(), cleanupIntervalMs);
   }
 
-  async get(key: string): Promise<string | null> {
+  get(key: string): Promise<string | null> {
     const entry = this.entries.get(key);
-    if (!entry) return null;
+    if (!entry) return Promise.resolve(null);
 
     if (Date.now() > entry.expires) {
       this.entries.delete(key);
-      return null;
+      return Promise.resolve(null);
     }
 
-    return entry.value;
+    return Promise.resolve(entry.value);
   }
 
-  async set(key: string, value: string, ttl?: number): Promise<void> {
+  set(key: string, value: string, ttl?: number): Promise<void> {
     const expires = ttl ? Date.now() + ttl : Date.now() + 900000; // Default 15 minutes
     this.entries.set(key, { value, expires });
+    return Promise.resolve();
   }
 
-  async delete(key: string): Promise<void> {
+  delete(key: string): Promise<void> {
     this.entries.delete(key);
+    return Promise.resolve();
   }
 
-  async clear(): Promise<void> {
+  clear(): Promise<void> {
     this.entries.clear();
+    return Promise.resolve();
   }
 
   private cleanup(): void {

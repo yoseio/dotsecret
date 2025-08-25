@@ -42,7 +42,7 @@ Deno.test("DefaultPolicy - allows everything", async () => {
 Deno.test("Policy - TypeScript policy example", async () => {
   // Create a test policy
   const testPolicy = {
-    async onStart(ctx: PolicyContext): Promise<PolicyEffect> {
+    onStart(ctx: PolicyContext): PolicyEffect {
       // Deny unmasked render in CI
       if (ctx.isCI && ctx.action === "render" && ctx.flags.mask === "off") {
         return { effect: "deny", reason: "Unmasked render forbidden in CI" };
@@ -56,7 +56,7 @@ Deno.test("Policy - TypeScript policy example", async () => {
       return { effect: "allow" };
     },
 
-    async onProvider(ref: ProviderRef, ctx: PolicyContext): Promise<PolicyEffect> {
+    onProvider(ref: ProviderRef, ctx: PolicyContext): PolicyEffect {
       // Require 1Password Connect
       if (ref.kind === "uri" && ref.scheme === "op") {
         if (!ctx.env.OP_CONNECT_TOKEN) {
@@ -72,7 +72,7 @@ Deno.test("Policy - TypeScript policy example", async () => {
       return { effect: "allow" };
     },
 
-    async onPipe(call: PipeCall, ctx: PolicyContext): Promise<PolicyEffect> {
+    onPipe(call: PipeCall, ctx: PolicyContext): PolicyEffect {
       // Example: Block certain pipes in certain contexts
       if (call.name === "sha256" && ctx.scopes.includes("frontend")) {
         return { effect: "deny", reason: "SHA256 not allowed in frontend scope" };
@@ -81,7 +81,7 @@ Deno.test("Policy - TypeScript policy example", async () => {
       return { effect: "allow" };
     },
 
-    async onKeyInject(key: string, meta: any, ctx: PolicyContext): Promise<PolicyEffect> {
+    onKeyInject(key: string, meta: { value?: string }, ctx: PolicyContext): PolicyEffect {
       // Enforce naming convention
       if (!key.match(/^[A-Z][A-Z0-9_]*$/)) {
         return { effect: "warn", reason: `Key '${key}' should use UPPER_SNAKE_CASE` };
@@ -98,7 +98,7 @@ Deno.test("Policy - TypeScript policy example", async () => {
       return { effect: "allow" };
     },
 
-    async onFinish(_ctx: PolicyContext): Promise<PolicyEffect> {
+    onFinish(_ctx: PolicyContext): PolicyEffect {
       return { effect: "allow" };
     },
   };
@@ -164,7 +164,7 @@ Deno.test("Policy - TypeScript policy example", async () => {
   assertEquals(keyEffect.reason?.includes("UPPER_SNAKE_CASE"), true);
 });
 
-Deno.test("Policy - JSON policy format", async () => {
+Deno.test("Policy - JSON policy format", () => {
   // Test JSON policy evaluation
   const jsonConfig = {
     rules: {
@@ -242,7 +242,7 @@ export default {
   }
 });
 
-Deno.test("Policy - effect precedence", async () => {
+Deno.test("Policy - effect precedence", () => {
   // Test that deny > warn > allow
   const effects: PolicyEffect[] = [
     { effect: "allow" },

@@ -4,7 +4,7 @@ import { decodeBase64 } from "@std/encoding/base64";
 export class EnvProvider implements Provider {
   name = "env";
 
-  async resolveSingle(ref: ProviderRef, _ctx: ResolveContext): Promise<string> {
+  resolveSingle(ref: ProviderRef, _ctx: ResolveContext): Promise<string> {
     let envVar: string;
     let defaultValue: string | undefined;
 
@@ -20,12 +20,12 @@ export class EnvProvider implements Provider {
     const value = Deno.env.get(envVar);
     if (value === undefined) {
       if (defaultValue !== undefined) {
-        return defaultValue;
+        return Promise.resolve(defaultValue);
       }
       throw new Error(`Environment variable ${envVar} not found`);
     }
 
-    return value;
+    return Promise.resolve(value);
   }
 }
 
@@ -63,7 +63,7 @@ export class FileProvider implements Provider {
 export class JSONProvider implements Provider {
   name = "json";
 
-  async resolveSingle(ref: ProviderRef, _ctx: ResolveContext): Promise<string> {
+  resolveSingle(ref: ProviderRef, _ctx: ResolveContext): Promise<string> {
     if (ref.kind !== "call") {
       throw new Error("JSON provider only supports function call syntax");
     }
@@ -78,7 +78,7 @@ export class JSONProvider implements Provider {
       const parsed = JSON.parse(value);
 
       if (!path) {
-        return JSON.stringify(parsed);
+        return Promise.resolve(JSON.stringify(parsed));
       }
 
       // Simple JSON path support (dot notation only)
@@ -93,9 +93,9 @@ export class JSONProvider implements Provider {
       }
 
       if (typeof current === "string") {
-        return current;
+        return Promise.resolve(current);
       }
-      return JSON.stringify(current);
+      return Promise.resolve(JSON.stringify(current));
     } catch (error) {
       throw new Error(
         `Failed to parse JSON: ${error instanceof Error ? error.message : String(error)}`,
@@ -107,7 +107,7 @@ export class JSONProvider implements Provider {
 export class Base64DecodeProvider implements Provider {
   name = "base64decode";
 
-  async resolveSingle(ref: ProviderRef, _ctx: ResolveContext): Promise<string> {
+  resolveSingle(ref: ProviderRef, _ctx: ResolveContext): Promise<string> {
     if (ref.kind !== "call") {
       throw new Error("base64decode provider only supports function call syntax");
     }
@@ -119,7 +119,7 @@ export class Base64DecodeProvider implements Provider {
 
     try {
       const decoded = decodeBase64(value);
-      return new TextDecoder().decode(decoded);
+      return Promise.resolve(new TextDecoder().decode(decoded));
     } catch (error) {
       throw new Error(
         `Failed to decode base64: ${error instanceof Error ? error.message : String(error)}`,

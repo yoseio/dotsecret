@@ -9,13 +9,15 @@ interface LintIssue {
   message: string;
 }
 
-export async function lintCommand(args: any): Promise<void> {
+type Argv = Record<string, unknown> & { _: unknown[] };
+
+export async function lintCommand(args: Argv): Promise<void> {
   const options: CLIOptions = {
-    file: args.file,
-    profile: args.profile,
-    scopes: args.scope || [],
-    overlays: args.overlay || [],
-    strict: args.strict,
+    file: args.file as string | undefined,
+    profile: args.profile as string | undefined,
+    scopes: (args.scope as string[] | undefined) || [],
+    overlays: (args.overlay as string[] | undefined) || [],
+    strict: args.strict as boolean | undefined,
   };
 
   const issues: LintIssue[] = [];

@@ -2,12 +2,14 @@ import type { CLIOptions } from "../../core/types.ts";
 import { OverlayResolver } from "../../core/overlay.ts";
 import { basename } from "@std/path";
 
-export async function scopesCommand(args: any): Promise<void> {
+type Argv = Record<string, unknown> & { _: unknown[] };
+
+export async function scopesCommand(args: Argv): Promise<void> {
   const options: CLIOptions = {
-    file: args.file,
-    profile: args.profile,
+    file: args.file as string | undefined,
+    profile: args.profile as string | undefined,
     scopes: [],
-    overlays: args.overlay || [],
+    overlays: Array.isArray(args.overlay) ? args.overlay as string[] : [],
   };
 
   // Resolve and parse files

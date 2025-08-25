@@ -116,7 +116,7 @@ Deno.test("JSONAuditLogger - appends to existing file", async () => {
   }
 });
 
-Deno.test("StderrAuditLogger - formats human-readable output", async () => {
+Deno.test("StderrAuditLogger - formats human-readable output", () => {
   const logger = new StderrAuditLogger();
 
   const event: AuditEvent = {
@@ -132,7 +132,8 @@ Deno.test("StderrAuditLogger - formats human-readable output", async () => {
   logger.log(event);
 
   // Can't capture stderr easily, but verify the formatting logic
-  const formatEvent = (logger as any).formatEvent.bind(logger);
+  const formatEvent = (logger as unknown as { formatEvent: (e: AuditEvent) => string })
+    .formatEvent.bind(logger);
   const formatted = formatEvent(event);
 
   assertEquals(formatted.includes("[2024-01-01T12:00:00.000Z]"), true);
@@ -143,7 +144,7 @@ Deno.test("StderrAuditLogger - formats human-readable output", async () => {
   assertEquals(formatted.includes("duration=150ms"), true);
 });
 
-Deno.test("StderrAuditLogger - formats error events", async () => {
+Deno.test("StderrAuditLogger - formats error events", () => {
   const logger = new StderrAuditLogger();
 
   const event: AuditEvent = {
@@ -154,7 +155,8 @@ Deno.test("StderrAuditLogger - formats error events", async () => {
     error: "Access denied",
   };
 
-  const formatEvent = (logger as any).formatEvent.bind(logger);
+  const formatEvent = (logger as unknown as { formatEvent: (e: AuditEvent) => string })
+    .formatEvent.bind(logger);
   const formatted = formatEvent(event);
 
   assertEquals(formatted.includes("FAILED"), true);

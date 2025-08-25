@@ -154,8 +154,8 @@ export class OnePasswordProvider implements Provider {
       throw new Error(`Failed to fetch vaults: ${vaultsResponse.status}`);
     }
 
-    const vaults = await vaultsResponse.json();
-    const vault = vaults.find((v: any) => v.name === vaultName || v.id === vaultName);
+    const vaults: Array<{ id: string; name: string }> = await vaultsResponse.json();
+    const vault = vaults.find((v) => v.name === vaultName || v.id === vaultName);
 
     if (!vault) {
       throw new Error(`Vault ${vaultName} not found`);
@@ -173,8 +173,8 @@ export class OnePasswordProvider implements Provider {
       throw new Error(`Failed to fetch items: ${itemsResponse.status}`);
     }
 
-    const items = await itemsResponse.json();
-    const itemSummary = items.find((i: any) => i.title === itemName || i.id === itemName);
+    const items: Array<{ id: string; title: string }> = await itemsResponse.json();
+    const itemSummary = items.find((i) => i.title === itemName || i.id === itemName);
 
     if (!itemSummary) {
       throw new Error(`Item ${itemName} not found in vault ${vaultName}`);

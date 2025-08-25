@@ -6,9 +6,9 @@ export class TrimPipe implements Pipe {
   name = "trim";
   pure = true;
 
-  async apply(input: Uint8Array | string): Promise<string> {
+  apply(input: Uint8Array | string): Promise<string> {
     const str = typeof input === "string" ? input : new TextDecoder().decode(input);
-    return str.trim();
+    return Promise.resolve(str.trim());
   }
 }
 
@@ -16,9 +16,9 @@ export class UpperPipe implements Pipe {
   name = "upper";
   pure = true;
 
-  async apply(input: Uint8Array | string): Promise<string> {
+  apply(input: Uint8Array | string): Promise<string> {
     const str = typeof input === "string" ? input : new TextDecoder().decode(input);
-    return str.toUpperCase();
+    return Promise.resolve(str.toUpperCase());
   }
 }
 
@@ -26,9 +26,9 @@ export class LowerPipe implements Pipe {
   name = "lower";
   pure = true;
 
-  async apply(input: Uint8Array | string): Promise<string> {
+  apply(input: Uint8Array | string): Promise<string> {
     const str = typeof input === "string" ? input : new TextDecoder().decode(input);
-    return str.toLowerCase();
+    return Promise.resolve(str.toLowerCase());
   }
 }
 
@@ -36,7 +36,7 @@ export class ReplacePipe implements Pipe {
   name = "replace";
   pure = true;
 
-  async apply(input: Uint8Array | string, args: Record<string, string>): Promise<string> {
+  apply(input: Uint8Array | string, args: Record<string, string>): Promise<string> {
     const str = typeof input === "string" ? input : new TextDecoder().decode(input);
     const search = args.search || args.from || "";
     const replace = args.replace || args.to || "";
@@ -49,10 +49,10 @@ export class ReplacePipe implements Pipe {
     if (flags.includes("r")) {
       // Regex mode
       const regex = new RegExp(search, flags.replace("r", ""));
-      return str.replace(regex, replace);
+      return Promise.resolve(str.replace(regex, replace));
     } else {
       // String mode
-      return str.split(search).join(replace);
+      return Promise.resolve(str.split(search).join(replace));
     }
   }
 }
@@ -61,9 +61,9 @@ export class Base64EncodePipe implements Pipe {
   name = "base64encode";
   pure = true;
 
-  async apply(input: Uint8Array | string): Promise<string> {
+  apply(input: Uint8Array | string): Promise<string> {
     const bytes = typeof input === "string" ? new TextEncoder().encode(input) : input;
-    return encodeBase64(bytes);
+    return Promise.resolve(encodeBase64(bytes));
   }
 }
 
@@ -71,10 +71,10 @@ export class Base64DecodePipe implements Pipe {
   name = "base64decode";
   pure = true;
 
-  async apply(input: Uint8Array | string): Promise<string> {
+  apply(input: Uint8Array | string): Promise<string> {
     const str = typeof input === "string" ? input : new TextDecoder().decode(input);
     const decoded = decodeBase64(str);
-    return new TextDecoder().decode(decoded);
+    return Promise.resolve(new TextDecoder().decode(decoded));
   }
 }
 
@@ -82,7 +82,7 @@ export class JSONPipe implements Pipe {
   name = "json";
   pure = true;
 
-  async apply(input: Uint8Array | string, args: Record<string, string>): Promise<string> {
+  apply(input: Uint8Array | string, args: Record<string, string>): Promise<string> {
     const str = typeof input === "string" ? input : new TextDecoder().decode(input);
     const path = args.path || args.value || "";
 
@@ -90,7 +90,7 @@ export class JSONPipe implements Pipe {
       const parsed = JSON.parse(str);
 
       if (!path) {
-        return JSON.stringify(parsed);
+        return Promise.resolve(JSON.stringify(parsed));
       }
 
       // Simple JSON path support (dot notation only)
@@ -105,9 +105,9 @@ export class JSONPipe implements Pipe {
       }
 
       if (typeof current === "string") {
-        return current;
+        return Promise.resolve(current);
       }
-      return JSON.stringify(current);
+      return Promise.resolve(JSON.stringify(current));
     } catch (error) {
       throw new Error(
         `Failed to parse JSON: ${error instanceof Error ? error.message : String(error)}`,
@@ -120,9 +120,9 @@ export class URIEncodePipe implements Pipe {
   name = "uriEncode";
   pure = true;
 
-  async apply(input: Uint8Array | string): Promise<string> {
+  apply(input: Uint8Array | string): Promise<string> {
     const str = typeof input === "string" ? input : new TextDecoder().decode(input);
-    return encodeURIComponent(str);
+    return Promise.resolve(encodeURIComponent(str));
   }
 }
 
@@ -130,9 +130,9 @@ export class URIDecodePipe implements Pipe {
   name = "uriDecode";
   pure = true;
 
-  async apply(input: Uint8Array | string): Promise<string> {
+  apply(input: Uint8Array | string): Promise<string> {
     const str = typeof input === "string" ? input : new TextDecoder().decode(input);
-    return decodeURIComponent(str);
+    return Promise.resolve(decodeURIComponent(str));
   }
 }
 
@@ -159,7 +159,7 @@ export class LinesPipe implements Pipe {
   name = "lines";
   pure = true;
 
-  async apply(input: Uint8Array | string, args: Record<string, string>): Promise<string> {
+  apply(input: Uint8Array | string, args: Record<string, string>): Promise<string> {
     const str = typeof input === "string" ? input : new TextDecoder().decode(input);
     const n = parseInt(args.n || args.value || "1", 10);
 
@@ -168,7 +168,7 @@ export class LinesPipe implements Pipe {
     }
 
     const lines = str.split("\n");
-    return lines.slice(0, n).join("\n");
+    return Promise.resolve(lines.slice(0, n).join("\n"));
   }
 }
 
@@ -176,15 +176,15 @@ export class DotenvEscapePipe implements Pipe {
   name = "dotenvEscape";
   pure = true;
 
-  async apply(input: Uint8Array | string): Promise<string> {
+  apply(input: Uint8Array | string): Promise<string> {
     const str = typeof input === "string" ? input : new TextDecoder().decode(input);
 
     // Escape special characters for dotenv format
     if (str.includes("\n") || str.includes('"') || str.includes("'") || str.includes(" ")) {
       // Use double quotes and escape internal quotes and backslashes
-      return `"${str.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+      return Promise.resolve(`"${str.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`);
     }
 
-    return str;
+    return Promise.resolve(str);
   }
 }

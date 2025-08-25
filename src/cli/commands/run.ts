@@ -7,34 +7,48 @@ import { createAuditLogger } from "../../core/audit.ts";
 import { OutputMasker } from "../../core/security/mask.ts";
 import { basename } from "@std/path";
 
-export async function runCommand(args: any): Promise<void> {
-  // Extract command and its arguments
-  const dashIndex = args._.indexOf("--");
-  if (dashIndex === -1) {
-    throw new Error("No command specified. Use: dotsecret run -- <command> [args...]");
-  }
+type Argv = { _: unknown[]; "--"?: string[] } & Record<string, unknown>;
 
-  const command = args._[dashIndex + 1];
-  const commandArgs = args._.slice(dashIndex + 2);
+export async function runCommand(args: Argv): Promise<void> {
+  // Prefer passthrough args captured after "--" in main
+  const passthrough = args["--"];
+
+  let command: string | undefined;
+  let commandArgs: string[] = [];
+
+  if (Array.isArray(passthrough) && passthrough.length > 0) {
+    command = passthrough[0]?.toString();
+    commandArgs = passthrough.slice(1).map((a) => a.toString());
+  } else {
+    // Fallback to legacy behavior: look for "--" in parsed positionals
+    const argv = (args._ || []).map((v) => v?.toString());
+    const dashIndex = argv.indexOf("--");
+    if (dashIndex === -1) {
+      throw new Error("No command specified. Use: dotsecret run -- <command> [args...]");
+    }
+
+    command = argv[dashIndex + 1];
+    commandArgs = argv.slice(dashIndex + 2).filter((a): a is string => a !== undefined);
+  }
 
   if (!command) {
     throw new Error("No command specified after --");
   }
 
   const options: CLIOptions = {
-    file: args.file,
-    profile: args.profile,
-    scopes: args.scope || [],
-    overlays: args.overlay || [],
-    pure: args.pure,
-    mask: args.mask,
-    strict: args.strict,
-    cache: args.cache,
-    ttl: args.ttl,
-    audit: args.audit,
-    policy: args.policy,
-    force: args.force,
-    noAutoScope: args["no-auto-scope"],
+    file: args.file as string | undefined,
+    profile: args.profile as string | undefined,
+    scopes: (args.scope as string[] | undefined) || [],
+    overlays: (args.overlay as string[] | undefined) || [],
+    pure: args.pure as boolean | undefined,
+    mask: args.mask as CLIOptions["mask"],
+    strict: args.strict as boolean | undefined,
+    cache: args.cache as CLIOptions["cache"],
+    ttl: args.ttl as string | undefined,
+    audit: args.audit as CLIOptions["audit"],
+    policy: args.policy as string | undefined,
+    force: args.force as boolean | undefined,
+    noAutoScope: (args as Record<string, unknown>)["no-auto-scope"] as boolean | undefined,
   };
 
   // Auto-detect scope from command if enabled
@@ -104,7 +118,7 @@ export async function runCommand(args: any): Promise<void> {
 
   // Run the command with the new environment
   const cmd = new Deno.Command(command.toString(), {
-    args: commandArgs.map((arg: any) => arg.toString()),
+    args: commandArgs.map((arg) => arg.toString()),
     env: result.env,
     stdin: "inherit",
     stdout: "piped",

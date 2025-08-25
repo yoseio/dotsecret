@@ -6,20 +6,22 @@ import { loadPolicy } from "../../core/policy.ts";
 import { createAuditLogger } from "../../core/audit.ts";
 import { maskValue } from "../../core/security/mask.ts";
 
-export async function explainCommand(args: any): Promise<void> {
+type Argv = Record<string, unknown> & { _: unknown[] };
+
+export async function explainCommand(args: Argv): Promise<void> {
   const options: CLIOptions = {
-    file: args.file,
-    profile: args.profile,
-    scopes: args.scope || [],
-    overlays: args.overlay || [],
-    pure: args.pure,
-    mask: args.mask || "on",
-    strict: args.strict,
-    cache: args.cache,
-    ttl: args.ttl,
-    audit: args.audit,
-    policy: args.policy,
-    force: args.force,
+    file: args.file as string | undefined,
+    profile: args.profile as string | undefined,
+    scopes: (args.scope as string[] | undefined) || [],
+    overlays: (args.overlay as string[] | undefined) || [],
+    pure: args.pure as boolean | undefined,
+    mask: (args.mask as CLIOptions["mask"]) || "on",
+    strict: args.strict as boolean | undefined,
+    cache: args.cache as CLIOptions["cache"],
+    ttl: args.ttl as string | undefined,
+    audit: args.audit as CLIOptions["audit"],
+    policy: args.policy as string | undefined,
+    force: args.force as boolean | undefined,
   };
 
   // Set up components

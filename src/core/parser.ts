@@ -320,6 +320,8 @@ export class Parser {
       const sepMatch = valueStr.match(/^\(["'](.+)["']\)/);
       if (sepMatch) {
         options.separator = sepMatch[1];
+        // Strip the ('sep') prefix before parsing the remaining expression
+        valueStr = valueStr.replace(/^\(["'](.+)["']\)\s*/, "");
       }
     }
 
@@ -329,7 +331,7 @@ export class Parser {
       const endsTriple = valueStr.endsWith('"""') && valueStr.length >= 6; // """"""
 
       if (startsTriple && !endsTriple) {
-        let collected: string[] = [];
+        const collected: string[] = [];
         let i = this.currentLine + 1;
         let foundEnd = false;
         while (i < this.lines.length) {

@@ -56,7 +56,13 @@ Examples:
 `;
 
 async function main() {
-  const args = parseArgs(Deno.args, {
+  // Capture arguments after "--" (passthrough to subcommand)
+  const rawArgs = [...Deno.args];
+  const ddIndex = rawArgs.indexOf("--");
+  const passthrough = ddIndex >= 0 ? rawArgs.slice(ddIndex + 1) : [];
+  const argsToParse = ddIndex >= 0 ? rawArgs.slice(0, ddIndex) : rawArgs;
+
+  const args = parseArgs(argsToParse, {
     alias: {
       f: "file",
       p: "profile",
@@ -81,7 +87,8 @@ async function main() {
       audit: "off",
       mask: "on",
     },
-    stopEarly: true,
+    // Allow options to appear after subcommand (e.g., `run -p x -s y -- <cmd>`)
+    stopEarly: false,
   });
 
   // Extract command
@@ -92,18 +99,29 @@ async function main() {
     Deno.exit(0);
   }
 
-  // Parse scope as array
-  const scopes = args.scope && typeof args.scope === "string"
-    ? args.scope.split(",").map((s: string) => s.trim())
-    : [];
+  // Normalize comma and repeatable string options into arrays
+  const toList = (val: unknown): string[] => {
+    if (!val) return [];
+    const parts = Array.isArray(val) ? val as unknown[] : [val as unknown];
+    const out: string[] = [];
+    for (const p of parts) {
+      const s = String(p);
+      for (const seg of s.split(",")) {
+        const t = seg.trim();
+        if (t) out.push(t);
+      }
+    }
+    return out;
+  };
 
-  // Parse overlay as array
-  const overlays = args.overlay && typeof args.overlay === "string"
-    ? args.overlay.split(",").map((s: string) => s.trim())
-    : [];
+  const scopes = toList(args.scope);
+  const overlays = toList(args.overlay);
 
   // Update args with parsed arrays
-  const parsedArgs = { ...args, scope: scopes, overlay: overlays };
+  const parsedArgs = { ...args, scope: scopes, overlay: overlays } as Record<string, unknown> & {
+    _: unknown[];
+  };
+  (parsedArgs as Record<string, unknown>)["--"] = passthrough;
 
   try {
     switch (command) {

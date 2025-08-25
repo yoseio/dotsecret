@@ -39,6 +39,7 @@ export class Evaluator {
   private currentProfile?: string;
   private currentScopes: string[] = [];
   private withContext: Record<string, Record<string, string>> = {};
+  private assignmentLog: Map<string, Array<{ assignment: Assignment; source: string }>> = new Map();
 
   constructor(
     private cache: Cache,
@@ -148,12 +149,16 @@ export class Evaluator {
     return expanded;
   }
 
-  private async processAssignment(assignment: Assignment, source: string): Promise<void> {
+  private processAssignment(assignment: Assignment, source: string): void {
     const { key, operator, expression, options } = assignment;
 
+    // Track every assignment in order for later resolution
+    const list = this.assignmentLog.get(key) || [];
+    list.push({ assignment, source });
+    this.assignmentLog.set(key, list);
+
     if (operator === "@unset") {
-      delete this.env[key];
-      delete this.metadata[key];
+      // Defer actual deletion to resolution phase
       return;
     }
 
@@ -175,13 +180,8 @@ export class Evaluator {
       protected: options.protected || false,
     };
 
-    if (operator === "+=") {
-      const separator = options.separator || ":";
-      const existing = this.env[key] || "";
-      this.env[key] = existing ? `${existing}${separator}` : "";
-    } else {
-      this.env[key] = "";
-    }
+    // Initialize placeholder; actual value computed in resolution phase
+    this.env[key] = this.env[key] ?? "";
   }
 
   private async processDirective(directive: Directive, source: string): Promise<void> {
@@ -315,29 +315,59 @@ export class Evaluator {
   }
 
   private async resolveExpressions(): Promise<void> {
-    for (const [key, meta] of Object.entries(this.metadata)) {
-      if (!meta.value && this.env[key] === "") {
-        // Need to resolve
-        const assignment = this.findAssignment(key);
-        if (assignment) {
-          try {
-            const value = await this.resolveExpression(assignment.expression, key);
-            this.env[key] = value;
-            meta.value = value;
-          } catch (error) {
-            this.errors.push(
-              `Failed to resolve ${key}: ${error instanceof Error ? error.message : String(error)}`,
-            );
-          }
+    for (const [key, entries] of this.assignmentLog) {
+      let current: string | undefined = undefined;
+      let finalAssignment: Assignment | undefined = undefined;
+      let finalSource: string | undefined = undefined;
+
+      for (const { assignment, source } of entries) {
+        const { operator } = assignment;
+
+        if (operator === "@unset") {
+          current = undefined;
+          finalAssignment = assignment;
+          finalSource = source;
+          continue;
         }
+
+        try {
+          const resolved = await this.resolveExpression(assignment.expression, key);
+          if (operator === "=") {
+            current = resolved;
+          } else if (operator === "?=") {
+            if (current === undefined) current = resolved;
+          } else if (operator === "+=") {
+            const sep = assignment.options.separator || ":";
+            current = current && current.length > 0 ? `${current}${sep}${resolved}` : resolved;
+          }
+          finalAssignment = assignment;
+          finalSource = source;
+        } catch (error) {
+          this.errors.push(
+            `Failed to resolve ${key}: ${error instanceof Error ? error.message : String(error)}`,
+          );
+        }
+      }
+
+      if (current === undefined) {
+        delete this.env[key];
+        delete this.metadata[key];
+      } else if (finalAssignment && finalSource) {
+        this.env[key] = current;
+        this.metadata[key] = {
+          value: current,
+          source: finalSource,
+          transforms: (finalAssignment.expression.pipes || []).map((p) => p.name),
+          provider: finalAssignment.expression.provider
+            ? this.getProviderName(finalAssignment.expression.provider)
+            : undefined,
+          protected: finalAssignment.options.protected || false,
+        };
       }
     }
   }
 
-  private findAssignment(_key: string): Assignment | null {
-    // TODO: Store assignments during parsing for lookup
-    return null;
-  }
+  // Note: assignment lookup is handled via assignmentLog during resolution
 
   private async resolveExpression(expression: Expression, key: string): Promise<string> {
     let value: string;

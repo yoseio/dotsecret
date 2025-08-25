@@ -2,23 +2,23 @@ import type { Policy, PolicyContext, PolicyEffect } from "./types.ts";
 import { join } from "@std/path";
 
 export class DefaultPolicy implements Policy {
-  async onStart(_ctx: PolicyContext): Promise<PolicyEffect> {
+  onStart(_ctx: PolicyContext): PolicyEffect {
     return { effect: "allow" };
   }
 
-  async onProvider(_ref: unknown, _ctx: PolicyContext): Promise<PolicyEffect> {
+  onProvider(_ref: unknown, _ctx: PolicyContext): PolicyEffect {
     return { effect: "allow" };
   }
 
-  async onPipe(_call: unknown, _ctx: PolicyContext): Promise<PolicyEffect> {
+  onPipe(_call: unknown, _ctx: PolicyContext): PolicyEffect {
     return { effect: "allow" };
   }
 
-  async onKeyInject(_key: string, _meta: unknown, _ctx: PolicyContext): Promise<PolicyEffect> {
+  onKeyInject(_key: string, _meta: unknown, _ctx: PolicyContext): PolicyEffect {
     return { effect: "allow" };
   }
 
-  async onFinish(_ctx: PolicyContext): Promise<PolicyEffect> {
+  onFinish(_ctx: PolicyContext): PolicyEffect {
     return { effect: "allow" };
   }
 }
@@ -69,13 +69,26 @@ async function loadJSONPolicy(path: string): Promise<Policy> {
   return new JSONPolicy(config);
 }
 
-function createPolicyFromObject(obj: any): Policy {
+type PolicyLike = {
+  onStart?: (ctx: PolicyContext) => PolicyEffect | Promise<PolicyEffect>;
+  onProvider?: (ref: unknown, ctx: PolicyContext) => PolicyEffect | Promise<PolicyEffect>;
+  onPipe?: (call: unknown, ctx: PolicyContext) => PolicyEffect | Promise<PolicyEffect>;
+  onKeyInject?: (
+    key: string,
+    meta: unknown,
+    ctx: PolicyContext,
+  ) => PolicyEffect | Promise<PolicyEffect>;
+  onFinish?: (ctx: PolicyContext) => PolicyEffect | Promise<PolicyEffect>;
+};
+
+function createPolicyFromObject(obj: unknown): Policy {
+  const p = obj as PolicyLike;
   return {
-    onStart: obj.onStart?.bind(obj),
-    onProvider: obj.onProvider?.bind(obj),
-    onPipe: obj.onPipe?.bind(obj),
-    onKeyInject: obj.onKeyInject?.bind(obj),
-    onFinish: obj.onFinish?.bind(obj),
+    onStart: typeof p.onStart === "function" ? p.onStart.bind(obj) : undefined,
+    onProvider: typeof p.onProvider === "function" ? p.onProvider.bind(obj) : undefined,
+    onPipe: typeof p.onPipe === "function" ? p.onPipe.bind(obj) : undefined,
+    onKeyInject: typeof p.onKeyInject === "function" ? p.onKeyInject.bind(obj) : undefined,
+    onFinish: typeof p.onFinish === "function" ? p.onFinish.bind(obj) : undefined,
   };
 }
 
@@ -101,27 +114,27 @@ interface JSONPolicyConfig {
 class JSONPolicy implements Policy {
   constructor(private config: JSONPolicyConfig) {}
 
-  async onStart(ctx: PolicyContext): Promise<PolicyEffect> {
+  onStart(ctx: PolicyContext): PolicyEffect {
     return this.evaluateRules(this.config.rules?.start || [], ctx);
   }
 
-  async onProvider(ref: unknown, ctx: PolicyContext): Promise<PolicyEffect> {
+  onProvider(ref: unknown, ctx: PolicyContext): PolicyEffect {
     return this.evaluateRules(this.config.rules?.provider || [], { ...ctx, ref });
   }
 
-  async onPipe(call: unknown, ctx: PolicyContext): Promise<PolicyEffect> {
+  onPipe(call: unknown, ctx: PolicyContext): PolicyEffect {
     return this.evaluateRules(this.config.rules?.pipe || [], { ...ctx, call });
   }
 
-  async onKeyInject(key: string, meta: unknown, ctx: PolicyContext): Promise<PolicyEffect> {
+  onKeyInject(key: string, meta: unknown, ctx: PolicyContext): PolicyEffect {
     return this.evaluateRules(this.config.rules?.keyInject || [], { ...ctx, key, meta });
   }
 
-  async onFinish(ctx: PolicyContext): Promise<PolicyEffect> {
+  onFinish(ctx: PolicyContext): PolicyEffect {
     return this.evaluateRules(this.config.rules?.finish || [], ctx);
   }
 
-  private evaluateRules(rules: JSONPolicyRule[], context: any): PolicyEffect {
+  private evaluateRules(rules: JSONPolicyRule[], context: unknown): PolicyEffect {
     for (const rule of rules) {
       if (this.matchesRule(rule, context)) {
         return { effect: rule.effect, reason: rule.reason };
@@ -131,7 +144,7 @@ class JSONPolicy implements Policy {
     return { effect: this.config.defaults?.effect || "allow" };
   }
 
-  private matchesRule(rule: JSONPolicyRule, context: any): boolean {
+  private matchesRule(rule: JSONPolicyRule, context: unknown): boolean {
     if (!rule.match) return true;
 
     for (const [key, value] of Object.entries(rule.match)) {
@@ -153,15 +166,19 @@ class JSONPolicy implements Policy {
     return true;
   }
 
-  private getNestedValue(obj: any, path: string): any {
+  private getNestedValue(obj: unknown, path: string): unknown {
     const parts = path.split(".");
-    let current = obj;
+    let current: unknown = obj;
 
     for (const part of parts) {
       if (current === null || current === undefined) {
         return undefined;
       }
-      current = current[part];
+      if (typeof current === "object" && current !== null && part in current) {
+        current = (current as Record<string, unknown>)[part];
+      } else {
+        return undefined;
+      }
     }
 
     return current;

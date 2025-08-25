@@ -4,15 +4,17 @@ import { Parser } from "../../core/parser.ts";
 import { exists } from "@std/fs";
 import { join } from "@std/path";
 
-export async function verifyCommand(args: any): Promise<void> {
+type Argv = Record<string, unknown> & { _: unknown[] };
+
+export async function verifyCommand(args: Argv): Promise<void> {
   const options: VerifyOptions = {
-    file: args.file,
-    profile: args.profile,
-    scopes: args.scope || [],
-    overlays: args.overlay || [],
-    strict: args.strict,
-    policy: args.policy,
-    drift: args.drift,
+    file: args.file as string | undefined,
+    profile: args.profile as string | undefined,
+    scopes: (args.scope as string[] | undefined) || [],
+    overlays: (args.overlay as string[] | undefined) || [],
+    strict: args.strict as boolean | undefined,
+    policy: args.policy as string | undefined,
+    drift: args.drift as boolean | undefined,
   };
 
   let hasErrors = false;

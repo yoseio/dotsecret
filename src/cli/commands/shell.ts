@@ -5,20 +5,22 @@ import { MemoryCache } from "../../core/cache/memory.ts";
 import { loadPolicy } from "../../core/policy.ts";
 import { createAuditLogger } from "../../core/audit.ts";
 
-export async function shellCommand(args: any): Promise<void> {
+type Argv = Record<string, unknown> & { _: unknown[] };
+
+export async function shellCommand(args: Argv): Promise<void> {
   const options: CLIOptions = {
-    file: args.file,
-    profile: args.profile,
-    scopes: args.scope || [],
-    overlays: args.overlay || [],
-    pure: args.pure,
-    mask: args.mask,
-    strict: args.strict,
-    cache: args.cache,
-    ttl: args.ttl,
-    audit: args.audit,
-    policy: args.policy,
-    force: args.force,
+    file: args.file as string | undefined,
+    profile: args.profile as string | undefined,
+    scopes: Array.isArray(args.scope) ? args.scope as string[] : [],
+    overlays: Array.isArray(args.overlay) ? args.overlay as string[] : [],
+    pure: args.pure as boolean | undefined,
+    mask: args.mask as "on" | "off" | "partial" | undefined,
+    strict: args.strict as boolean | undefined,
+    cache: args.cache as "off" | "mem" | "disk" | undefined,
+    ttl: args.ttl as string | undefined,
+    audit: args.audit as "json" | "stderr" | "off" | undefined,
+    policy: args.policy as string | undefined,
+    force: args.force as boolean | undefined,
   };
 
   // Set up components

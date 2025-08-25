@@ -99,7 +99,11 @@ export class OverlayResolver {
     for (const includePath of includes) {
       const resolvedPaths = await this.resolveIncludePath(includePath, absolutePath);
       for (const resolvedPath of resolvedPaths) {
-        const includedFiles = await this.parseFileWithIncludes(resolvedPath, processedIncludes, true);
+        const includedFiles = await this.parseFileWithIncludes(
+          resolvedPath,
+          processedIncludes,
+          true,
+        );
         results.push(...includedFiles);
       }
     }
@@ -115,10 +119,10 @@ export class OverlayResolver {
     if (includePath.includes("*")) {
       const files: string[] = [];
       const pattern = globToRegExp(absoluteInclude);
-      
+
       // Get directory to search
       const searchDir = absoluteInclude.substring(0, absoluteInclude.lastIndexOf("/"));
-      
+
       try {
         for await (const entry of Deno.readDir(searchDir)) {
           if (entry.isFile) {
@@ -131,7 +135,7 @@ export class OverlayResolver {
       } catch {
         // Directory doesn't exist
       }
-      
+
       return files;
     }
 
@@ -151,11 +155,11 @@ export class OverlayResolver {
       for (const node of file.nodes) {
         if (node.type === "assignment") {
           const { key } = node.data;
-          
+
           if (!keyValues.has(key)) {
             keyValues.set(key, new Map());
           }
-          
+
           const values = keyValues.get(key)!;
           const valueStr = JSON.stringify(node.data.expression);
           values.set(file.path, valueStr);

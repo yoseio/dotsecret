@@ -63,7 +63,18 @@ async function main() {
       s: "scope",
       h: "help",
     },
-    string: ["file", "profile", "scope", "overlay", "mask", "cache", "ttl", "audit", "policy", "format"],
+    string: [
+      "file",
+      "profile",
+      "scope",
+      "overlay",
+      "mask",
+      "cache",
+      "ttl",
+      "audit",
+      "policy",
+      "format",
+    ],
     boolean: ["pure", "strict", "force", "no-auto-scope", "drift", "help"],
     default: {
       cache: "mem",
@@ -82,7 +93,7 @@ async function main() {
   }
 
   // Parse scope as array
-  const scopes = args.scope && typeof args.scope === "string" 
+  const scopes = args.scope && typeof args.scope === "string"
     ? args.scope.split(",").map((s: string) => s.trim())
     : [];
 

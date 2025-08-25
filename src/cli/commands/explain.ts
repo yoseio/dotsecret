@@ -36,11 +36,11 @@ export async function explainCommand(args: any): Promise<void> {
   const result = await evaluator.evaluate(parsedFiles);
 
   console.log("Environment Variable Origins and Transformations\n");
-  console.log("=" .repeat(50));
+  console.log("=".repeat(50));
 
   // Group by source file
   const bySource = new Map<string, Array<[string, KeyMetadata]>>();
-  
+
   for (const [key, meta] of Object.entries(result.metadata)) {
     const source = meta.source || "parent environment";
     if (!bySource.has(source)) {
@@ -56,17 +56,17 @@ export async function explainCommand(args: any): Promise<void> {
 
     for (const [key, meta] of entries.sort((a, b) => a[0].localeCompare(b[0]))) {
       console.log(`\n  ${key}:`);
-      
+
       if (meta.provider) {
         console.log(`    Provider: ${meta.provider}`);
       }
-      
+
       if (meta.transforms.length > 0) {
         console.log(`    Transforms: ${meta.transforms.join(" → ")}`);
       }
-      
+
       console.log(`    Value: ${maskValue(meta.value, options.mask || "on")}`);
-      
+
       if (meta.protected) {
         console.log(`    Protected: yes`);
       }
@@ -76,9 +76,9 @@ export async function explainCommand(args: any): Promise<void> {
   // Show inheritance from parent env
   if (!options.pure) {
     const parentKeys = Object.keys(Deno.env.toObject()).filter(
-      key => !(key in result.metadata)
+      (key) => !(key in result.metadata),
     );
-    
+
     if (parentKeys.length > 0) {
       console.log(`\nInherited from parent environment:`);
       console.log("-".repeat(35));

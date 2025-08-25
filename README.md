@@ -143,49 +143,65 @@ PYTHONPATH = "./src"
 ## Commands
 
 ### run
+
 Execute a command with injected environment variables:
+
 ```bash
 dotsecret run [options] -- <command> [args...]
 ```
 
 ### render
+
 Output resolved environment variables:
+
 ```bash
 dotsecret render --format env|json|shell|k8s|compose
 ```
 
 ### verify
+
 Check configuration for errors:
+
 ```bash
 dotsecret verify --strict
 ```
 
 ### explain
+
 Show where each variable comes from:
+
 ```bash
 dotsecret explain
 ```
 
 ### doctor
+
 Diagnose connectivity and authentication:
+
 ```bash
 dotsecret doctor
 ```
 
 ### shell
+
 Start an interactive shell with injected environment:
+
 ```bash
 dotsecret shell
 ```
 
 ### scopes
+
 List available scopes:
+
 ```bash
 dotsecret scopes
 ```
 
 ### lint
+
 Check for common issues:
+
 ```bash
 dotsecret lint
 ```
@@ -202,13 +218,13 @@ export default {
     }
     return { effect: "allow" };
   },
-  
+
   onProvider(ref, ctx) {
     if (ref.scheme === "op" && !Deno.env.get("OP_CONNECT_TOKEN")) {
       return { effect: "deny", reason: "1Password Connect required" };
     }
     return { effect: "allow" };
-  }
+  },
 };
 ```
 

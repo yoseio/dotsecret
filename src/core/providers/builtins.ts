@@ -51,7 +51,11 @@ export class FileProvider implements Provider {
       const content = await Deno.readTextFile(filePath);
       return content;
     } catch (error) {
-      throw new Error(`Failed to read file ${filePath}: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to read file ${filePath}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
     }
   }
 }
@@ -72,7 +76,7 @@ export class JSONProvider implements Provider {
 
     try {
       const parsed = JSON.parse(value);
-      
+
       if (!path) {
         return JSON.stringify(parsed);
       }
@@ -80,7 +84,7 @@ export class JSONProvider implements Provider {
       // Simple JSON path support (dot notation only)
       const parts = path.split(".");
       let current = parsed;
-      
+
       for (const part of parts) {
         if (current === null || current === undefined) {
           throw new Error(`Path ${path} not found in JSON`);
@@ -93,7 +97,9 @@ export class JSONProvider implements Provider {
       }
       return JSON.stringify(current);
     } catch (error) {
-      throw new Error(`Failed to parse JSON: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to parse JSON: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 }
@@ -115,7 +121,9 @@ export class Base64DecodeProvider implements Provider {
       const decoded = decodeBase64(value);
       return new TextDecoder().decode(decoded);
     } catch (error) {
-      throw new Error(`Failed to decode base64: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to decode base64: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 }

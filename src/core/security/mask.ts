@@ -51,7 +51,7 @@ export class OutputMasker {
 
   maskOutput(output: string): string {
     let masked = output;
-    
+
     for (const [key, value] of this.secrets) {
       const escapedValue = value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const regex = new RegExp(escapedValue, "g");

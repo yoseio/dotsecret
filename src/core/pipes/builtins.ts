@@ -1,5 +1,5 @@
 import type { Pipe } from "../types.ts";
-import { encodeBase64, decodeBase64 } from "@std/encoding/base64";
+import { decodeBase64, encodeBase64 } from "@std/encoding/base64";
 import { encodeHex } from "@std/encoding/hex";
 
 export class TrimPipe implements Pipe {
@@ -88,7 +88,7 @@ export class JSONPipe implements Pipe {
 
     try {
       const parsed = JSON.parse(str);
-      
+
       if (!path) {
         return JSON.stringify(parsed);
       }
@@ -96,7 +96,7 @@ export class JSONPipe implements Pipe {
       // Simple JSON path support (dot notation only)
       const parts = path.split(".");
       let current = parsed;
-      
+
       for (const part of parts) {
         if (current === null || current === undefined) {
           throw new Error(`Path ${path} not found in JSON`);
@@ -109,7 +109,9 @@ export class JSONPipe implements Pipe {
       }
       return JSON.stringify(current);
     } catch (error) {
-      throw new Error(`Failed to parse JSON: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to parse JSON: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 }
@@ -160,7 +162,7 @@ export class LinesPipe implements Pipe {
   async apply(input: Uint8Array | string, args: Record<string, string>): Promise<string> {
     const str = typeof input === "string" ? input : new TextDecoder().decode(input);
     const n = parseInt(args.n || args.value || "1", 10);
-    
+
     if (isNaN(n) || n < 1) {
       throw new Error("lines pipe requires a positive number");
     }
@@ -176,13 +178,13 @@ export class DotenvEscapePipe implements Pipe {
 
   async apply(input: Uint8Array | string): Promise<string> {
     const str = typeof input === "string" ? input : new TextDecoder().decode(input);
-    
+
     // Escape special characters for dotenv format
     if (str.includes("\n") || str.includes('"') || str.includes("'") || str.includes(" ")) {
       // Use double quotes and escape internal quotes and backslashes
       return `"${str.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
     }
-    
+
     return str;
   }
 }

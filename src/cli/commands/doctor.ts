@@ -57,7 +57,9 @@ export async function doctorCommand(): Promise<void> {
       if (endpoint.optional) {
         console.log(`  - ${endpoint.name}: Not available (optional)`);
       } else {
-        console.error(`  ✗ ${endpoint.name}: ${error instanceof Error ? error.message : String(error)}`);
+        console.error(
+          `  ✗ ${endpoint.name}: ${error instanceof Error ? error.message : String(error)}`,
+        );
         hasIssues = true;
       }
     }
@@ -65,8 +67,8 @@ export async function doctorCommand(): Promise<void> {
 
   // Check cache directory
   console.log("\nCache Configuration:");
-  const cacheDir = Deno.env.get("XDG_CACHE_HOME") || 
-                  Deno.env.get("HOME") + "/.cache";
+  const cacheDir = Deno.env.get("XDG_CACHE_HOME") ||
+    Deno.env.get("HOME") + "/.cache";
   const dotsecretCache = `${cacheDir}/dotsecret`;
   try {
     await Deno.stat(dotsecretCache);
@@ -103,7 +105,9 @@ export async function doctorCommand(): Promise<void> {
   }
 }
 
-async function checkGCPAuth(): Promise<{ ok: boolean; method?: string; project?: string; error?: string }> {
+async function checkGCPAuth(): Promise<
+  { ok: boolean; method?: string; project?: string; error?: string }
+> {
   // Check ADC
   const adcPath = Deno.env.get("GOOGLE_APPLICATION_CREDENTIALS");
   if (adcPath) {
@@ -122,7 +126,7 @@ async function checkGCPAuth(): Promise<{ ok: boolean; method?: string; project?:
       {
         headers: { "Metadata-Flavor": "Google" },
         signal: AbortSignal.timeout(2000),
-      }
+      },
     );
     if (response.ok) {
       const project = await response.text();
@@ -151,11 +155,13 @@ async function checkGCPAuth(): Promise<{ ok: boolean; method?: string; project?:
   return { ok: false, error: "No authentication method available" };
 }
 
-async function check1PasswordAuth(): Promise<{ ok: boolean; method?: string; version?: string; error?: string }> {
+async function check1PasswordAuth(): Promise<
+  { ok: boolean; method?: string; version?: string; error?: string }
+> {
   // Check Connect
   const connectHost = Deno.env.get("OP_CONNECT_HOST");
   const connectToken = Deno.env.get("OP_CONNECT_TOKEN");
-  
+
   if (connectHost && connectToken) {
     try {
       const response = await fetch(`${connectHost}/v1/vaults`, {
@@ -168,7 +174,10 @@ async function check1PasswordAuth(): Promise<{ ok: boolean; method?: string; ver
         return { ok: true, method: `Connect (${connectHost})` };
       }
     } catch (error) {
-      return { ok: false, error: `Connect unreachable: ${error instanceof Error ? error.message : String(error)}` };
+      return {
+        ok: false,
+        error: `Connect unreachable: ${error instanceof Error ? error.message : String(error)}`,
+      };
     }
   }
 

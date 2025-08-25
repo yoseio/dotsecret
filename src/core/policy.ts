@@ -54,18 +54,18 @@ export async function loadPolicy(policyPath?: string): Promise<Policy> {
 
 async function loadTSPolicy(path: string): Promise<Policy> {
   const module = await import(`file://${path}`);
-  
+
   if (module.default && typeof module.default === "object") {
     return createPolicyFromObject(module.default);
   }
-  
+
   throw new Error("TypeScript policy must export a default object");
 }
 
 async function loadJSONPolicy(path: string): Promise<Policy> {
   const content = await Deno.readTextFile(path);
   const config = JSON.parse(content);
-  
+
   return new JSONPolicy(config);
 }
 
@@ -127,16 +127,16 @@ class JSONPolicy implements Policy {
         return { effect: rule.effect, reason: rule.reason };
       }
     }
-    
+
     return { effect: this.config.defaults?.effect || "allow" };
   }
 
   private matchesRule(rule: JSONPolicyRule, context: any): boolean {
     if (!rule.match) return true;
-    
+
     for (const [key, value] of Object.entries(rule.match)) {
       const contextValue = this.getNestedValue(context, key);
-      
+
       if (value instanceof RegExp) {
         if (typeof contextValue !== "string" || !value.test(contextValue)) {
           return false;
@@ -149,21 +149,21 @@ class JSONPolicy implements Policy {
         return false;
       }
     }
-    
+
     return true;
   }
 
   private getNestedValue(obj: any, path: string): any {
     const parts = path.split(".");
     let current = obj;
-    
+
     for (const part of parts) {
       if (current === null || current === undefined) {
         return undefined;
       }
       current = current[part];
     }
-    
+
     return current;
   }
 }

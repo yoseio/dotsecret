@@ -1,6 +1,6 @@
 import { assertEquals, assertRejects } from "@std/assert";
 import { getProviderRegistry } from "../core/providers/index.ts";
-import type { ResolveContext, ProviderRef } from "../core/types.ts";
+import type { ProviderRef, ResolveContext } from "../core/types.ts";
 import { MemoryCache } from "../core/cache/memory.ts";
 import { DefaultPolicy } from "../core/policy.ts";
 import { NoOpAuditLogger } from "../core/audit.ts";
@@ -26,7 +26,7 @@ Deno.test("Provider - env", async () => {
     const ref1: ProviderRef = {
       kind: "call",
       fn: "env",
-      args: { name: "TEST_VAR" }
+      args: { name: "TEST_VAR" },
     };
     assertEquals(await env.resolveSingle(ref1, mockContext), "test-value");
 
@@ -34,7 +34,7 @@ Deno.test("Provider - env", async () => {
     const ref2: ProviderRef = {
       kind: "uri",
       scheme: "env",
-      uri: "env://TEST_VAR"
+      uri: "env://TEST_VAR",
     };
     assertEquals(await env.resolveSingle(ref2, mockContext), "test-value");
 
@@ -42,7 +42,7 @@ Deno.test("Provider - env", async () => {
     const ref3: ProviderRef = {
       kind: "call",
       fn: "env",
-      args: { name: "MISSING_VAR", default: "fallback" }
+      args: { name: "MISSING_VAR", default: "fallback" },
     };
     assertEquals(await env.resolveSingle(ref3, mockContext), "fallback");
 
@@ -50,12 +50,12 @@ Deno.test("Provider - env", async () => {
     const ref4: ProviderRef = {
       kind: "call",
       fn: "env",
-      args: { name: "MISSING_VAR" }
+      args: { name: "MISSING_VAR" },
     };
     await assertRejects(
       async () => await env.resolveSingle(ref4, mockContext),
       Error,
-      "not found"
+      "not found",
     );
   } finally {
     Deno.env.delete("TEST_VAR");
@@ -75,7 +75,7 @@ Deno.test("Provider - file", async () => {
     const ref1: ProviderRef = {
       kind: "call",
       fn: "file",
-      args: { path: testPath }
+      args: { path: testPath },
     };
     const content = await file.resolveSingle(ref1, mockContext);
     assertEquals(content, "file contents\nwith multiple lines");
@@ -84,7 +84,7 @@ Deno.test("Provider - file", async () => {
     const ref2: ProviderRef = {
       kind: "uri",
       scheme: "file",
-      uri: `file://${testPath}`
+      uri: `file://${testPath}`,
     };
     assertEquals(await file.resolveSingle(ref2, mockContext), content);
 
@@ -92,12 +92,12 @@ Deno.test("Provider - file", async () => {
     const ref3: ProviderRef = {
       kind: "call",
       fn: "file",
-      args: { path: "/non/existent/file" }
+      args: { path: "/non/existent/file" },
     };
     await assertRejects(
       async () => await file.resolveSingle(ref3, mockContext),
       Error,
-      "Failed to read"
+      "Failed to read",
     );
   } finally {
     await Deno.remove(testPath);
@@ -112,8 +112,8 @@ Deno.test("Provider - json", async () => {
     name: "test",
     nested: {
       value: "hello",
-      number: 42
-    }
+      number: 42,
+    },
   };
   const jsonStr = JSON.stringify(jsonData);
 
@@ -121,14 +121,14 @@ Deno.test("Provider - json", async () => {
   const ref1: ProviderRef = {
     kind: "call",
     fn: "json",
-    args: { value: jsonStr, path: "name" }
+    args: { value: jsonStr, path: "name" },
   };
   assertEquals(await json.resolveSingle(ref1, mockContext), "test");
 
   const ref2: ProviderRef = {
     kind: "call",
     fn: "json",
-    args: { value: jsonStr, path: "nested.value" }
+    args: { value: jsonStr, path: "nested.value" },
   };
   assertEquals(await json.resolveSingle(ref2, mockContext), "hello");
 
@@ -136,7 +136,7 @@ Deno.test("Provider - json", async () => {
   const ref3: ProviderRef = {
     kind: "call",
     fn: "json",
-    args: { value: jsonStr }
+    args: { value: jsonStr },
   };
   assertEquals(await json.resolveSingle(ref3, mockContext), jsonStr);
 
@@ -144,24 +144,24 @@ Deno.test("Provider - json", async () => {
   const ref4: ProviderRef = {
     kind: "call",
     fn: "json",
-    args: { value: "invalid json" }
+    args: { value: "invalid json" },
   };
   await assertRejects(
     async () => await json.resolveSingle(ref4, mockContext),
     Error,
-    "parse"
+    "parse",
   );
 
   // URI style should error
   const ref5: ProviderRef = {
     kind: "uri",
     scheme: "json",
-    uri: "json://test"
+    uri: "json://test",
   };
   await assertRejects(
     async () => await json.resolveSingle(ref5, mockContext),
     Error,
-    "function call"
+    "function call",
   );
 });
 
@@ -173,7 +173,7 @@ Deno.test("Provider - base64decode", async () => {
   const ref1: ProviderRef = {
     kind: "call",
     fn: "base64decode",
-    args: { value: "aGVsbG8gd29ybGQ=" }
+    args: { value: "aGVsbG8gd29ybGQ=" },
   };
   assertEquals(await base64decode.resolveSingle(ref1, mockContext), "hello world");
 
@@ -181,31 +181,31 @@ Deno.test("Provider - base64decode", async () => {
   const ref2: ProviderRef = {
     kind: "call",
     fn: "base64decode",
-    args: { value: "invalid!base64" }
+    args: { value: "invalid!base64" },
   };
   await assertRejects(
     async () => await base64decode.resolveSingle(ref2, mockContext),
     Error,
-    "decode"
+    "decode",
   );
 
   // Empty value
   const ref3: ProviderRef = {
     kind: "call",
     fn: "base64decode",
-    args: { value: "" }
+    args: { value: "" },
   };
   await assertRejects(
     async () => await base64decode.resolveSingle(ref3, mockContext),
     Error,
-    "required"
+    "required",
   );
 });
 
 Deno.test("Provider - caching", async () => {
   const providers = getProviderRegistry();
   const env = providers.get("env")!;
-  
+
   // Create a new context with a fresh cache
   const cache = new MemoryCache();
   const context = { ...mockContext, cache };
@@ -217,7 +217,7 @@ Deno.test("Provider - caching", async () => {
     const ref: ProviderRef = {
       kind: "call",
       fn: "env",
-      args: { name: "CACHE_TEST" }
+      args: { name: "CACHE_TEST" },
     };
 
     // First call should hit the env
@@ -240,7 +240,7 @@ Deno.test("Provider - caching", async () => {
 
 Deno.test("Provider - registry", () => {
   const providers = getProviderRegistry();
-  
+
   // Check all required providers are registered
   assertEquals(providers.has("env"), true);
   assertEquals(providers.has("file"), true);
@@ -248,7 +248,7 @@ Deno.test("Provider - registry", () => {
   assertEquals(providers.has("base64decode"), true);
   assertEquals(providers.has("gcp"), true);
   assertEquals(providers.has("op"), true);
-  
+
   // Check provider interface
   const env = providers.get("env")!;
   assertEquals(env.name, "env");

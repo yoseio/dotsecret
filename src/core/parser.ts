@@ -1,8 +1,8 @@
 import type {
-  ASTNode,
   Assignment,
   AssignmentOperator,
   AssignmentOptions,
+  ASTNode,
   Directive,
   Expression,
   ParsedFile,
@@ -296,7 +296,9 @@ export class Parser {
     const content = isProtected ? protectedMatch![2] : line;
 
     // Allow leading indentation before the key
-    const operatorMatch = content.trimStart().match(/^([A-Z_][A-Z0-9_]*)\s*(=\s*@unset|[?+]?=)(.*)$/);
+    const operatorMatch = content.trimStart().match(
+      /^([A-Z_][A-Z0-9_]*)\s*(=\s*@unset|[?+]?=)(.*)$/,
+    );
     if (!operatorMatch) {
       return null;
     }
@@ -418,7 +420,7 @@ export class Parser {
       if (!inQuote) {
         if (char === "(") depth++;
         if (char === ")") depth--;
-        
+
         // Handle soft pipe ?|
         if (char === "?" && next === "|" && depth === 0) {
           parts.push(current.trim());
@@ -426,7 +428,7 @@ export class Parser {
           i++; // Skip the |
           continue;
         }
-        
+
         if (char === "|" && depth === 0 && next !== "|") {
           parts.push(current.trim());
           current = "";

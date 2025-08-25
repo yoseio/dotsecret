@@ -12,10 +12,10 @@ DEBUG = true
   const result = parser.parse();
 
   assertEquals(result.nodes.length, 3);
-  
-  const assignments = result.nodes.filter(n => n.type === "assignment");
+
+  const assignments = result.nodes.filter((n) => n.type === "assignment");
   assertEquals(assignments.length, 3);
-  
+
   const appName = assignments[0].data;
   assertEquals(appName.key, "APP_NAME");
   assertEquals(appName.expression.literal, "my-app");
@@ -32,8 +32,8 @@ ESCAPED = \\!escaped
   const parser = new Parser(content, "test.secret");
   const result = parser.parse();
 
-  const assignments = result.nodes.filter(n => n.type === "assignment");
-  
+  const assignments = result.nodes.filter((n) => n.type === "assignment");
+
   assertEquals(assignments[0].data.expression.trigger, "!");
   assertEquals(assignments[0].data.expression.provider?.kind, "call");
   const provider1 = assignments[0].data.expression.provider;
@@ -41,10 +41,10 @@ ESCAPED = \\!escaped
   if (provider1?.kind === "call") {
     assertEquals(provider1.fn, "gcp");
   }
-  
+
   assertEquals(assignments[1].data.expression.trigger, "");
   assertEquals(assignments[1].data.expression.literal, "!not-evaluated");
-  
+
   assertEquals(assignments[2].data.expression.trigger, "");
   assertEquals(assignments[2].data.expression.literal, "!escaped");
 });
@@ -58,15 +58,15 @@ OP_TOKEN = !op://vaults/Production/items/API/fields/token
   const parser = new Parser(content, "test.secret");
   const result = parser.parse();
 
-  const assignments = result.nodes.filter(n => n.type === "assignment");
-  
+  const assignments = result.nodes.filter((n) => n.type === "assignment");
+
   const provider2 = assignments[0].data.expression.provider;
   assertEquals(provider2?.kind, "uri");
   if (provider2?.kind === "uri") {
     assertEquals(provider2.scheme, "gcp");
     assertEquals(provider2.uri, "gcp://projects/my-project/secrets/api-key#latest");
   }
-  
+
   const provider3 = assignments[1].data.expression.provider;
   assertEquals(provider3?.kind, "uri");
   if (provider3?.kind === "uri") {
@@ -84,15 +84,15 @@ SOFT_PIPE = !env(name="MISSING") ?| upper() || "default"
   const parser = new Parser(content, "test.secret");
   const result = parser.parse();
 
-  const assignments = result.nodes.filter(n => n.type === "assignment");
-  
+  const assignments = result.nodes.filter((n) => n.type === "assignment");
+
   assertEquals(assignments[0].data.expression.pipes.length, 1);
   assertEquals(assignments[0].data.expression.pipes[0].name, "upper");
-  
+
   assertEquals(assignments[1].data.expression.pipes.length, 2);
   assertEquals(assignments[1].data.expression.pipes[0].name, "base64encode");
   assertEquals(assignments[1].data.expression.pipes[1].name, "trim");
-  
+
   assertEquals(assignments[2].data.expression.pipes.length, 1);
   assertEquals(assignments[2].data.expression.pipes[0].soft, true);
   assertEquals(assignments[2].data.expression.fallback, "default");
@@ -111,8 +111,8 @@ REMOVE = @unset
   const parser = new Parser(content, "test.secret");
   const result = parser.parse();
 
-  const assignments = result.nodes.filter(n => n.type === "assignment");
-  
+  const assignments = result.nodes.filter((n) => n.type === "assignment");
+
   assertEquals(assignments[0].data.operator, "=");
   assertEquals(assignments[1].data.operator, "?=");
   assertEquals(assignments[2].data.operator, "+=");
@@ -140,18 +140,18 @@ PYTHONPATH = "./src"
   const parser = new Parser(content, "test.secret");
   const result = parser.parse();
 
-  const sections = result.nodes.filter(n => n.type === "section");
+  const sections = result.nodes.filter((n) => n.type === "section");
   assertEquals(sections.length, 4);
-  
+
   assertEquals(sections[0].data.type, "profile");
   assertEquals(sections[0].data.name, "default");
-  
+
   assertEquals(sections[1].data.type, "profile");
   assertEquals(sections[1].data.name, "production");
-  
+
   assertEquals(sections[2].data.type, "scope");
   assertEquals(sections[2].data.name, "node");
-  
+
   assertEquals(sections[3].data.type, "scope");
   assertEquals(sections[3].data.name, "python");
   assertEquals(sections[3].data.extends, ["node"]);
@@ -166,14 +166,14 @@ Deno.test("Parser - directives", () => {
   const parser = new Parser(content, "test.secret");
   const result = parser.parse();
 
-  const directives = result.nodes.filter(n => n.type === "directive");
+  const directives = result.nodes.filter((n) => n.type === "directive");
   assertEquals(directives.length, 2);
-  
+
   assertEquals(directives[0].data.type, "include");
   if (directives[0].data.type === "include") {
     assertEquals(directives[0].data.path, "./common.secret");
   }
-  
+
   assertEquals(directives[1].data.type, "import");
   if (directives[1].data.type === "import") {
     assertEquals(directives[1].data.uri, "gcp://projects/my-project/secrets?label.env=prod");
@@ -192,9 +192,9 @@ with gcp(project="my-project") {
   const parser = new Parser(content, "test.secret");
   const result = parser.parse();
 
-  const directives = result.nodes.filter(n => n.type === "directive");
+  const directives = result.nodes.filter((n) => n.type === "directive");
   assertEquals(directives.length, 1);
-  
+
   const withDirective = directives[0].data;
   assertEquals(withDirective.type, "with");
   if (withDirective.type === "with") {
@@ -215,9 +215,9 @@ Deno.test("Parser - from directive", () => {
   const parser = new Parser(content, "test.secret");
   const result = parser.parse();
 
-  const directives = result.nodes.filter(n => n.type === "directive");
+  const directives = result.nodes.filter((n) => n.type === "directive");
   assertEquals(directives.length, 1);
-  
+
   const fromDirective = directives[0].data;
   assertEquals(fromDirective.type, "from");
   if (fromDirective.type === "from") {
@@ -237,9 +237,9 @@ Deno.test("Parser - if directive", () => {
   const parser = new Parser(content, "test.secret");
   const result = parser.parse();
 
-  const directives = result.nodes.filter(n => n.type === "directive");
+  const directives = result.nodes.filter((n) => n.type === "directive");
   assertEquals(directives.length, 1);
-  
+
   const ifDirective = directives[0].data;
   assertEquals(ifDirective.type, "if");
   if (ifDirective.type === "if") {
@@ -260,9 +260,9 @@ MIIDXTCCAkWgAwIBAgIJAKl...
   const parser = new Parser(content, "test.secret");
   const result = parser.parse();
 
-  const assignments = result.nodes.filter(n => n.type === "assignment");
+  const assignments = result.nodes.filter((n) => n.type === "assignment");
   assertEquals(assignments.length, 1);
-  
+
   const cert = assignments[0].data.expression.literal;
   assertEquals(cert?.includes("-----BEGIN CERTIFICATE-----"), true);
   assertEquals(cert?.includes("-----END CERTIFICATE-----"), true);
@@ -278,7 +278,7 @@ APP = "test" # Inline comment not supported, included in value
   const parser = new Parser(content, "test.secret");
   const result = parser.parse();
 
-  const comments = result.nodes.filter(n => n.type === "comment");
+  const comments = result.nodes.filter((n) => n.type === "comment");
   assertEquals(comments.length, 2);
   assertEquals(comments[0].text, "This is a comment");
   assertEquals(comments[1].text, "Another comment");
@@ -291,7 +291,7 @@ Deno.test("Parser - invalid syntax", () => {
       parser.parse();
     },
     Error,
-    "Invalid"
+    "Invalid",
   );
 });
 
@@ -304,12 +304,12 @@ JSON_PATH = !file(path="config.json") | json(path="database.host")
   const parser = new Parser(content, "test.secret");
   const result = parser.parse();
 
-  const assignments = result.nodes.filter(n => n.type === "assignment");
-  
+  const assignments = result.nodes.filter((n) => n.type === "assignment");
+
   assertEquals(assignments[0].data.expression.pipes[0].name, "replace");
   assertEquals(assignments[0].data.expression.pipes[0].args.from, "world");
   assertEquals(assignments[0].data.expression.pipes[0].args.to, "deno");
-  
+
   assertEquals(assignments[1].data.expression.pipes[0].name, "json");
   assertEquals(assignments[1].data.expression.pipes[0].args.path, "database.host");
 });

@@ -10,7 +10,7 @@ export async function cacheCommand(args: any): Promise<void> {
 
   // Memory cache is per-process, so we only need to clear disk cache
   const cacheDir = getCacheDir();
-  
+
   try {
     await Deno.remove(cacheDir, { recursive: true });
     console.log(`✓ Cache purged successfully from ${cacheDir}`);
@@ -18,7 +18,9 @@ export async function cacheCommand(args: any): Promise<void> {
     if (error instanceof Deno.errors.NotFound) {
       console.log("✓ Cache is already empty");
     } else {
-      console.error(`✗ Failed to purge cache: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(
+        `✗ Failed to purge cache: ${error instanceof Error ? error.message : String(error)}`,
+      );
       Deno.exit(1);
     }
   }
@@ -27,7 +29,7 @@ export async function cacheCommand(args: any): Promise<void> {
 function getCacheDir(): string {
   const xdgCache = Deno.env.get("XDG_CACHE_HOME");
   const home = Deno.env.get("HOME");
-  
+
   if (xdgCache) {
     return `${xdgCache}/dotsecret`;
   } else if (home) {

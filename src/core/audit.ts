@@ -18,10 +18,12 @@ export class JSONAuditLogger implements AuditLogger {
   async flush(): Promise<void> {
     if (this.events.length === 0) return;
 
-    const logs = this.events.map((event) => JSON.stringify({
-      ...event,
-      timestamp: event.timestamp.toISOString(),
-    })).join("\n") + "\n";
+    const logs = this.events.map((event) =>
+      JSON.stringify({
+        ...event,
+        timestamp: event.timestamp.toISOString(),
+      })
+    ).join("\n") + "\n";
 
     if (this.output === "stderr") {
       const encoder = new TextEncoder();

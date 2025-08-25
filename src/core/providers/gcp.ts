@@ -37,16 +37,16 @@ export class GCPSecretManagerProvider implements Provider {
       secretName = ref.args.secret || ref.args.name || ref.args.value;
       project = ref.args.project;
       version = ref.args.version || "latest";
-      
+
       if (!secretName) {
         throw new Error("Secret name is required");
       }
-      
+
       // If project not specified, try to get from metadata service
       if (!project) {
         project = await this.getProjectFromMetadata();
       }
-      
+
       resourcePath = `projects/${project}/secrets/${secretName}/versions/${version}`;
     }
 
@@ -124,7 +124,8 @@ export class GCPSecretManagerProvider implements Provider {
         }
 
         try {
-          const versionUrl = `https://secretmanager.googleapis.com/v1/${secret.name}/versions/latest:access`;
+          const versionUrl =
+            `https://secretmanager.googleapis.com/v1/${secret.name}/versions/latest:access`;
           const versionResponse = await fetch(versionUrl, {
             headers: {
               "Authorization": `Bearer ${token}`,
@@ -148,7 +149,7 @@ export class GCPSecretManagerProvider implements Provider {
             error: error instanceof Error ? error.message : String(error),
           });
         }
-      })
+      }),
     );
 
     return result;
@@ -201,7 +202,7 @@ export class GCPSecretManagerProvider implements Provider {
         headers: {
           "Metadata-Flavor": "Google",
         },
-      }
+      },
     );
 
     if (!response.ok) {
@@ -239,7 +240,7 @@ export class GCPSecretManagerProvider implements Provider {
           headers: {
             "Metadata-Flavor": "Google",
           },
-        }
+        },
       );
 
       if (response.ok) {

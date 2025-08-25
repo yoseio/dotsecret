@@ -42,24 +42,28 @@ Deno.test("Pipe - replace", async () => {
 
   assertEquals(
     await replace.apply("hello world", { search: "world", replace: "deno" }, mockContext),
-    "hello deno"
+    "hello deno",
   );
-  
+
   assertEquals(
     await replace.apply("foo bar foo", { from: "foo", to: "baz" }, mockContext),
-    "baz bar baz"
+    "baz bar baz",
   );
 
   // Regex mode
   assertEquals(
-    await replace.apply("test123test", { search: "\\d+", replace: "XXX", flags: "gr" }, mockContext),
-    "testXXXtest"
+    await replace.apply(
+      "test123test",
+      { search: "\\d+", replace: "XXX", flags: "gr" },
+      mockContext,
+    ),
+    "testXXXtest",
   );
 
   await assertRejects(
     async () => await replace.apply("test", {}, mockContext),
     Error,
-    "search"
+    "search",
   );
 });
 
@@ -69,19 +73,19 @@ Deno.test("Pipe - base64encode", async () => {
 
   assertEquals(
     await base64encode.apply("hello", {}, mockContext),
-    "aGVsbG8="
+    "aGVsbG8=",
   );
-  
+
   assertEquals(
     await base64encode.apply("hello world", {}, mockContext),
-    "aGVsbG8gd29ybGQ="
+    "aGVsbG8gd29ybGQ=",
   );
 
   // Binary data
   const bytes = new Uint8Array([0x48, 0x65, 0x6C, 0x6C, 0x6F]);
   assertEquals(
     await base64encode.apply(bytes, {}, mockContext),
-    "SGVsbG8="
+    "SGVsbG8=",
   );
 });
 
@@ -91,17 +95,17 @@ Deno.test("Pipe - base64decode", async () => {
 
   assertEquals(
     await base64decode.apply("aGVsbG8=", {}, mockContext),
-    "hello"
+    "hello",
   );
-  
+
   assertEquals(
     await base64decode.apply("aGVsbG8gd29ybGQ=", {}, mockContext),
-    "hello world"
+    "hello world",
   );
 
   await assertRejects(
     async () => await base64decode.apply("invalid!base64", {}, mockContext),
-    Error
+    Error,
   );
 });
 
@@ -112,31 +116,31 @@ Deno.test("Pipe - json", async () => {
   const jsonStr = JSON.stringify({
     name: "test",
     nested: {
-      value: "hello"
+      value: "hello",
     },
-    array: [1, 2, 3]
+    array: [1, 2, 3],
   });
 
   assertEquals(
     await json.apply(jsonStr, { path: "name" }, mockContext),
-    "test"
+    "test",
   );
-  
+
   assertEquals(
     await json.apply(jsonStr, { path: "nested.value" }, mockContext),
-    "hello"
+    "hello",
   );
 
   // Array access would need index support
   assertEquals(
     await json.apply(jsonStr, {}, mockContext),
-    jsonStr // Returns original if no path
+    jsonStr, // Returns original if no path
   );
 
   await assertRejects(
     async () => await json.apply("invalid json", { path: "test" }, mockContext),
     Error,
-    "parse"
+    "parse",
   );
 });
 
@@ -146,17 +150,17 @@ Deno.test("Pipe - uriEncode", async () => {
 
   assertEquals(
     await uriEncode.apply("hello world", {}, mockContext),
-    "hello%20world"
+    "hello%20world",
   );
-  
+
   assertEquals(
     await uriEncode.apply("test@example.com", {}, mockContext),
-    "test%40example.com"
+    "test%40example.com",
   );
 
   assertEquals(
     await uriEncode.apply("name=value&other=test", {}, mockContext),
-    "name%3Dvalue%26other%3Dtest"
+    "name%3Dvalue%26other%3Dtest",
   );
 });
 
@@ -166,17 +170,17 @@ Deno.test("Pipe - uriDecode", async () => {
 
   assertEquals(
     await uriDecode.apply("hello%20world", {}, mockContext),
-    "hello world"
+    "hello world",
   );
-  
+
   assertEquals(
     await uriDecode.apply("test%40example.com", {}, mockContext),
-    "test@example.com"
+    "test@example.com",
   );
 
   assertEquals(
     await uriDecode.apply("name%3Dvalue%26other%3Dtest", {}, mockContext),
-    "name=value&other=test"
+    "name=value&other=test",
   );
 });
 
@@ -187,7 +191,7 @@ Deno.test("Pipe - sha256", async () => {
   // Default hex format
   assertEquals(
     await sha256.apply("hello", {}, mockContext),
-    "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+    "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
   );
 
   // Base64 format
@@ -204,29 +208,29 @@ Deno.test("Pipe - lines", async () => {
 
   assertEquals(
     await lines.apply(multiline, { n: "1" }, mockContext),
-    "line1"
+    "line1",
   );
-  
+
   assertEquals(
     await lines.apply(multiline, { n: "2" }, mockContext),
-    "line1\nline2"
+    "line1\nline2",
   );
 
   assertEquals(
     await lines.apply(multiline, { value: "3" }, mockContext),
-    "line1\nline2\nline3"
+    "line1\nline2\nline3",
   );
 
   // Default is 1 line
   assertEquals(
     await lines.apply(multiline, {}, mockContext),
-    "line1"
+    "line1",
   );
 
   await assertRejects(
     async () => await lines.apply("test", { n: "0" }, mockContext),
     Error,
-    "positive"
+    "positive",
   );
 });
 
@@ -236,41 +240,41 @@ Deno.test("Pipe - dotenvEscape", async () => {
 
   assertEquals(
     await dotenvEscape.apply("simple", {}, mockContext),
-    "simple"
+    "simple",
   );
-  
+
   assertEquals(
     await dotenvEscape.apply("with spaces", {}, mockContext),
-    '"with spaces"'
+    '"with spaces"',
   );
 
   assertEquals(
     await dotenvEscape.apply('with "quotes"', {}, mockContext),
-    '"with \\"quotes\\""'
+    '"with \\"quotes\\""',
   );
 
   assertEquals(
     await dotenvEscape.apply("multi\nline", {}, mockContext),
-    '"multi\nline"'
+    '"multi\nline"',
   );
 
   assertEquals(
-    await dotenvEscape.apply('path\\with\\backslash', {}, mockContext),
-    'path\\with\\backslash'  // No quotes needed without spaces
+    await dotenvEscape.apply("path\\with\\backslash", {}, mockContext),
+    "path\\with\\backslash", // No quotes needed without spaces
   );
 });
 
 Deno.test("Pipe - chaining example", async () => {
   const pipes = getPipeRegistry();
-  
+
   // Simulate: !file(path="cert.pem") | trim() | base64encode()
   let result = "  -----BEGIN CERTIFICATE-----\n  CONTENT\n  -----END CERTIFICATE-----  ";
-  
+
   const trim = pipes.get("trim")!;
   result = await trim.apply(result, {}, mockContext) as string;
   assertEquals(result.startsWith("-----BEGIN"), true);
   assertEquals(result.endsWith("-----"), true);
-  
+
   const base64encode = pipes.get("base64encode")!;
   result = await base64encode.apply(result, {}, mockContext) as string;
   assertEquals(typeof result, "string");

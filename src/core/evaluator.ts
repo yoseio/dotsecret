@@ -1,6 +1,6 @@
 import type {
-  ASTNode,
   Assignment,
+  ASTNode,
   AuditLogger,
   Cache,
   CLIOptions,
@@ -52,7 +52,7 @@ export class Evaluator {
 
   async evaluate(files: ParsedFile[]): Promise<EvaluationResult> {
     const policyContext = this.createPolicyContext();
-    
+
     const startEffect = await this.policy.onStart?.(policyContext);
     if (startEffect?.effect === "deny") {
       throw new Error(`Policy denied start: ${startEffect.reason}`);
@@ -119,16 +119,16 @@ export class Evaluator {
     if (!section) return true;
 
     if (section.type === "profile") {
-      return !this.currentProfile || 
-             section.name === "default" || 
-             section.name === this.currentProfile;
+      return !this.currentProfile ||
+        section.name === "default" ||
+        section.name === this.currentProfile;
     }
 
     if (section.type === "scope") {
       if (this.currentScopes.length === 0) return false;
-      
+
       const scopeNames = this.expandScopes([section.name], new Set());
-      return this.currentScopes.some(s => scopeNames.has(s));
+      return this.currentScopes.some((s) => scopeNames.has(s));
     }
 
     return true;
@@ -136,15 +136,15 @@ export class Evaluator {
 
   private expandScopes(scopes: string[], visited: Set<string>): Set<string> {
     const expanded = new Set<string>();
-    
+
     for (const scope of scopes) {
       if (visited.has(scope)) continue;
       visited.add(scope);
       expanded.add(scope);
-      
+
       // TODO: Handle scope extends when we have full scope definitions
     }
-    
+
     return expanded;
   }
 
@@ -252,7 +252,7 @@ export class Evaluator {
     for (const [key, path] of Object.entries(directive.mappings)) {
       const uri = `${directive.baseUri}/${path}`;
       const ref: ProviderRef = { kind: "uri", scheme: provider.name, uri };
-      
+
       try {
         const value = await provider.resolveSingle(ref, ctx);
         this.env[key] = value;
@@ -264,7 +264,9 @@ export class Evaluator {
           protected: false,
         };
       } catch (error) {
-        this.errors.push(`Failed to resolve ${key}: ${error instanceof Error ? error.message : String(error)}`);
+        this.errors.push(
+          `Failed to resolve ${key}: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
     }
   }
@@ -323,7 +325,9 @@ export class Evaluator {
             this.env[key] = value;
             meta.value = value;
           } catch (error) {
-            this.errors.push(`Failed to resolve ${key}: ${error instanceof Error ? error.message : String(error)}`);
+            this.errors.push(
+              `Failed to resolve ${key}: ${error instanceof Error ? error.message : String(error)}`,
+            );
           }
         }
       }
@@ -340,7 +344,10 @@ export class Evaluator {
 
     if (expression.trigger === "!") {
       if (!expression.provider) {
-        throw new EvaluationError("Expression marked for evaluation but no provider specified", key);
+        throw new EvaluationError(
+          "Expression marked for evaluation but no provider specified",
+          key,
+        );
       }
       value = await this.resolveProvider(expression.provider, key);
     } else {
@@ -372,7 +379,7 @@ export class Evaluator {
     const start = Date.now();
     try {
       const result = await provider.resolveSingle(ref, ctx);
-      
+
       this.audit.log({
         timestamp: new Date(),
         action: "provider_resolve",
@@ -428,7 +435,12 @@ export class Evaluator {
         result = typeof output === "string" ? output : new TextDecoder().decode(output);
       } catch (error) {
         if (!pipeCall.soft) {
-          throw new EvaluationError(`Pipe ${pipeCall.name} failed: ${error instanceof Error ? error.message : String(error)}`, key);
+          throw new EvaluationError(
+            `Pipe ${pipeCall.name} failed: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+            key,
+          );
         }
       }
     }
@@ -438,7 +450,7 @@ export class Evaluator {
 
   private async applyInterpolations(): Promise<void> {
     const resolved: KV = {};
-    
+
     for (const [key, value] of Object.entries(this.env)) {
       resolved[key] = await interpolate(value, this.env, Deno.env.toObject());
     }

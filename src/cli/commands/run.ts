@@ -56,7 +56,9 @@ export async function runCommand(args: any): Promise<void> {
   // Check for conflicts
   const conflicts = resolver.detectConflicts(parsedFiles);
   if (conflicts.size > 0) {
-    const message = `Detected conflicts in the following keys: ${Array.from(conflicts.keys()).join(", ")}`;
+    const message = `Detected conflicts in the following keys: ${
+      Array.from(conflicts.keys()).join(", ")
+    }`;
     if (options.strict) {
       throw new Error(message);
     } else {
@@ -122,7 +124,7 @@ export async function runCommand(args: any): Promise<void> {
       while (true) {
         const { done, value } = await stdoutReader.read();
         if (done) break;
-        
+
         const text = textDecoder.decode(value);
         const masked = options.mask !== "off" ? masker.maskOutput(text) : text;
         await Deno.stdout.write(textEncoder.encode(masked));
@@ -139,7 +141,7 @@ export async function runCommand(args: any): Promise<void> {
       while (true) {
         const { done, value } = await stderrReader.read();
         if (done) break;
-        
+
         const text = textDecoder.decode(value);
         const masked = options.mask !== "off" ? masker.maskOutput(text) : text;
         await Deno.stderr.write(textEncoder.encode(masked));
@@ -151,7 +153,7 @@ export async function runCommand(args: any): Promise<void> {
 
   // Wait for the process to complete
   const status = await child.status;
-  
+
   // Clean up
   cache.destroy();
   await audit.flush();

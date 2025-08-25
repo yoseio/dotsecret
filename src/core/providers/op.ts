@@ -37,7 +37,7 @@ export class OnePasswordProvider implements Provider {
       vaultName = ref.args.vault || "Private";
       itemName = ref.args.item || ref.args.value;
       fieldName = ref.args.field || "password";
-      
+
       if (!itemName) {
         throw new Error("Item name is required");
       }
@@ -54,7 +54,14 @@ export class OnePasswordProvider implements Provider {
     const connectToken = Deno.env.get("OP_CONNECT_TOKEN");
 
     if (connectHost && connectToken) {
-      return await this.resolveViaConnect(vaultName, itemName, fieldName, connectHost, connectToken, ctx);
+      return await this.resolveViaConnect(
+        vaultName,
+        itemName,
+        fieldName,
+        connectHost,
+        connectToken,
+        ctx,
+      );
     } else {
       // Check policy for CLI fallback
       const policyEffect = await ctx.policy.onProvider?.(ref, {
@@ -110,12 +117,12 @@ export class OnePasswordProvider implements Provider {
     fieldName: string,
     host: string,
     token: string,
-    ctx: ResolveContext
+    ctx: ResolveContext,
   ): Promise<string> {
     const item = await this.getItemViaConnect(vaultName, itemName, host, token);
-    
-    const field = item.fields.find(f => 
-      f.label === fieldName || 
+
+    const field = item.fields.find((f) =>
+      f.label === fieldName ||
       f.id === fieldName
     );
 
@@ -133,7 +140,7 @@ export class OnePasswordProvider implements Provider {
     vaultName: string,
     itemName: string,
     host: string,
-    token: string
+    token: string,
   ): Promise<OnePasswordItem> {
     // First, get vault ID
     const vaultsResponse = await fetch(`${host}/v1/vaults`, {
@@ -149,7 +156,7 @@ export class OnePasswordProvider implements Provider {
 
     const vaults = await vaultsResponse.json();
     const vault = vaults.find((v: any) => v.name === vaultName || v.id === vaultName);
-    
+
     if (!vault) {
       throw new Error(`Vault ${vaultName} not found`);
     }
@@ -168,7 +175,7 @@ export class OnePasswordProvider implements Provider {
 
     const items = await itemsResponse.json();
     const itemSummary = items.find((i: any) => i.title === itemName || i.id === itemName);
-    
+
     if (!itemSummary) {
       throw new Error(`Item ${itemName} not found in vault ${vaultName}`);
     }
@@ -192,7 +199,7 @@ export class OnePasswordProvider implements Provider {
     vaultName: string,
     itemName: string,
     fieldName: string,
-    ctx: ResolveContext
+    ctx: ResolveContext,
   ): Promise<string> {
     const command = new Deno.Command("op", {
       args: ["read", `op://vaults/${vaultName}/items/${itemName}/fields/${fieldName}`],
@@ -211,7 +218,7 @@ export class OnePasswordProvider implements Provider {
     }
 
     const value = new TextDecoder().decode(stdout).trim();
-    
+
     const cacheKey = `op:${vaultName}/${itemName}/${fieldName}`;
     await ctx.cache.set(cacheKey, value, 300000); // Cache for 5 minutes
 

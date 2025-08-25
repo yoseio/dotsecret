@@ -27,7 +27,7 @@ export async function verifyCommand(args: any): Promise<void> {
   // Check file existence and syntax
   for (const file of files) {
     console.log(`Checking ${file}...`);
-    
+
     try {
       const content = await Deno.readTextFile(file);
       const parser = new Parser(content, file);
@@ -43,7 +43,7 @@ export async function verifyCommand(args: any): Promise<void> {
   try {
     const parsedFiles = await resolver.parseAllFiles(options);
     const conflicts = resolver.detectConflicts(parsedFiles);
-    
+
     if (conflicts.size > 0) {
       console.log("\nConflicts detected:");
       for (const [key, sources] of conflicts) {
@@ -60,7 +60,9 @@ export async function verifyCommand(args: any): Promise<void> {
       console.log("\n✓ No conflicts detected");
     }
   } catch (error) {
-    console.error(`\n✗ Failed to check conflicts: ${error instanceof Error ? error.message : String(error)}`);
+    console.error(
+      `\n✗ Failed to check conflicts: ${error instanceof Error ? error.message : String(error)}`,
+    );
     hasErrors = true;
   }
 
@@ -71,7 +73,9 @@ export async function verifyCommand(args: any): Promise<void> {
     await loadPolicy(options.policy);
     console.log("  ✓ Policy loaded successfully");
   } catch (error) {
-    console.error(`  ✗ Failed to load policy: ${error instanceof Error ? error.message : String(error)}`);
+    console.error(
+      `  ✗ Failed to load policy: ${error instanceof Error ? error.message : String(error)}`,
+    );
     hasErrors = true;
   }
 
@@ -82,11 +86,13 @@ export async function verifyCommand(args: any): Promise<void> {
     try {
       const schemaContent = await Deno.readTextFile(schemaPath);
       JSON.parse(schemaContent); // Validate JSON syntax
-      
+
       // TODO: Implement actual schema validation
       console.log("  ✓ Schema loaded (validation not yet implemented)");
     } catch (error) {
-      console.error(`  ✗ Failed to load schema: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(
+        `  ✗ Failed to load schema: ${error instanceof Error ? error.message : String(error)}`,
+      );
       hasErrors = true;
     }
   }
@@ -99,11 +105,13 @@ export async function verifyCommand(args: any): Promise<void> {
       try {
         const lockContent = await Deno.readTextFile(lockPath);
         JSON.parse(lockContent); // Validate JSON syntax
-        
+
         // TODO: Implement actual drift detection
         console.log("  ✓ Lock file loaded (drift detection not yet implemented)");
       } catch (error) {
-        console.error(`  ✗ Failed to check drift: ${error instanceof Error ? error.message : String(error)}`);
+        console.error(
+          `  ✗ Failed to check drift: ${error instanceof Error ? error.message : String(error)}`,
+        );
         hasErrors = true;
       }
     } else {

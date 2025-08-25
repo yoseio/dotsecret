@@ -1,5 +1,5 @@
 import { assertEquals } from "@std/assert";
-import { maskValue, maskEnv, shouldMaskKey, OutputMasker } from "../core/security/mask.ts";
+import { maskEnv, maskValue, OutputMasker, shouldMaskKey } from "../core/security/mask.ts";
 
 Deno.test("maskValue - on mode", () => {
   assertEquals(maskValue("secret123", "on"), "***MASKED***");
@@ -18,7 +18,7 @@ Deno.test("maskValue - partial mode", () => {
   // Long values show first and last 4 chars
   assertEquals(maskValue("1234567890abcdef", "partial"), "1234...cdef");
   assertEquals(maskValue("this-is-a-long-secret-value", "partial"), "this...alue");
-  
+
   // Short values are fully masked
   assertEquals(maskValue("short", "partial"), "***MASKED***");
   assertEquals(maskValue("12345678", "partial"), "***MASKED***"); // Exactly 8 chars
@@ -86,7 +86,7 @@ Deno.test("OutputMasker - masks secrets in output", () => {
   `;
 
   const masked = masker.maskOutput(output);
-  
+
   assertEquals(masked.includes("secret-123-key"), false);
   assertEquals(masked.includes("***API_KEY***"), true);
   assertEquals(masked.includes("my-password-456"), false);
@@ -99,10 +99,10 @@ Deno.test("OutputMasker - handles regex special characters", () => {
   const masker = new OutputMasker();
 
   masker.addSecret("REGEX", "test$123.456*end");
-  
+
   const output = "Value is test$123.456*end in the output";
   const masked = masker.maskOutput(output);
-  
+
   assertEquals(masked, "Value is ***REGEX*** in the output");
 });
 
@@ -120,10 +120,10 @@ Deno.test("OutputMasker - multiple occurrences", () => {
   const masker = new OutputMasker();
 
   masker.addSecret("TOKEN", "abc123");
-  
+
   const output = "Token: abc123, repeated: abc123, and again abc123";
   const masked = masker.maskOutput(output);
-  
+
   assertEquals(masked, "Token: ***TOKEN***, repeated: ***TOKEN***, and again ***TOKEN***");
 });
 
@@ -132,10 +132,10 @@ Deno.test("OutputMasker - overlapping secrets", () => {
 
   masker.addSecret("KEY1", "secret123");
   masker.addSecret("KEY2", "123secret");
-  
+
   const output = "Values: secret123 and 123secret and secret123secret";
   const masked = masker.maskOutput(output);
-  
+
   // Should handle overlapping replacements gracefully
   assertEquals(masked.includes("secret123"), false);
   assertEquals(masked.includes("123secret"), false);

@@ -126,9 +126,9 @@ export async function lintCommand(args: any): Promise<void> {
         if (value && !value.startsWith("!") && !value.startsWith('"!') && !value.startsWith("'!")) {
           // Check for potential hardcoded secrets
           const suspiciousPatterns = [
-            /^[a-zA-Z0-9]{32,}$/,  // Long random strings
-            /^(aws_|AKIA|ASIA)/,   // AWS keys
-            /^sk_live_/,           // Stripe keys
+            /^[a-zA-Z0-9]{32,}$/, // Long random strings
+            /^(aws_|AKIA|ASIA)/, // AWS keys
+            /^sk_live_/, // Stripe keys
             /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, // UUIDs
           ];
 
@@ -189,8 +189,8 @@ export async function lintCommand(args: any): Promise<void> {
       console.log(`  ${issue.line}:${issue.column} ${icon} ${issue.message}`);
     }
 
-    const errorCount = issues.filter(i => i.severity === "error").length;
-    const warningCount = issues.filter(i => i.severity === "warning").length;
+    const errorCount = issues.filter((i) => i.severity === "error").length;
+    const warningCount = issues.filter((i) => i.severity === "warning").length;
 
     console.log(`\nSummary: ${errorCount} error(s), ${warningCount} warning(s)`);
 

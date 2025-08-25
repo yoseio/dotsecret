@@ -22,11 +22,11 @@ export async function scopesCommand(args: any): Promise<void> {
       if (node.type === "section" && node.data.type === "scope") {
         const scopeName = node.data.name;
         const existing = scopes.get(scopeName) || { files: [] };
-        
+
         if (node.data.extends) {
           existing.extends = node.data.extends;
         }
-        
+
         existing.files.push(file.path);
         scopes.set(scopeName, existing);
       }
@@ -34,7 +34,7 @@ export async function scopesCommand(args: any): Promise<void> {
   }
 
   console.log("Available Scopes\n");
-  console.log("=" .repeat(50));
+  console.log("=".repeat(50));
 
   if (scopes.size === 0) {
     console.log("\nNo scopes defined in configuration files.");
@@ -44,11 +44,11 @@ export async function scopesCommand(args: any): Promise<void> {
 
     for (const [name, info] of sortedScopes) {
       console.log(`\n${name}:`);
-      
+
       if (info.extends && info.extends.length > 0) {
         console.log(`  Extends: ${info.extends.join(", ")}`);
       }
-      
+
       console.log(`  Defined in:`);
       for (const file of info.files) {
         console.log(`    - ${file}`);
@@ -64,7 +64,7 @@ export async function scopesCommand(args: any): Promise<void> {
   try {
     // Check common bin directories
     const pathDirs = (Deno.env.get("PATH") || "").split(":");
-    
+
     for (const dir of pathDirs) {
       try {
         for await (const entry of Deno.readDir(dir)) {
@@ -94,7 +94,7 @@ export async function scopesCommand(args: any): Promise<void> {
   console.log("\nUsage:");
   console.log("  dotsecret run --scope <name> -- <command>");
   console.log("  dotsecret run --scope <a>,<b> -- <command>  # Multiple scopes");
-  
+
   if (!args["no-auto-scope"]) {
     console.log("\nNote: Scope auto-detection is enabled.");
     console.log("Commands matching scope names will automatically use their scope.");
